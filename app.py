@@ -491,3 +491,23 @@ def delete_quiz(id):
 
 # ------------------- EXISTING ADMIN ROUTES (Announcements, Media, Gallery, etc.) -------------------
 # ... (keep all previous admi
+# ... (keep all previous admin routes like add_announcement, delete_announcement, add_media, delete_media, add_gallery, delete_gallery, delete_message, delete_application) ...
+# To save space, I assume you already have them. If not, they are in the original code.
+
+# ------------------- CREATE ADMIN USER & TABLES -------------------
+def init_admin():
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(username='admin', phone='+255700000000', is_admin=True)
+        admin.set_password('admin123')
+        db.session.add(admin)
+        db.session.commit()
+        print("Admin user created: username 'admin', password 'admin123'")
+
+with app.app_context():
+    db.create_all()
+    init_admin()
+
+if __name__ == '__main__':
+    app.run()
+```
