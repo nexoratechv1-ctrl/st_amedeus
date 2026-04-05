@@ -1,0 +1,118 @@
+{# templates/admin/dashboard.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="section-title">
+        <h2><i class="fas fa-crown"></i> Admin Dashboard</h2>
+        <p>Welcome, {{ current_user.username }}!</p>
+    </div>
+    
+    <ul class="nav nav-tabs mb-4" id="adminTab" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#announcements">Announcements</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#studentlife">Student Life Media</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#gallery">Gallery</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#messages">Messages</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#applications">Applications</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#users">Users</button></li>
+    </ul>
+    
+    <div class="tab-content">
+        <!-- Announcements Tab -->
+        <div class="tab-pane fade show active" id="announcements">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add New Announcement</h4>
+                    <form method="POST" action="{{ url_for('add_announcement') }}">
+                        <div class="mb-3"><input type="text" name="title" placeholder="Title" class="form-control" required></div>
+                        <div class="mb-3"><textarea name="content" placeholder="Content" class="form-control" rows="3" required></textarea></div>
+                        <div class="mb-3">
+                            <select name="category" class="form-select">
+                                <option value="news">News</option>
+                                <option value="event">Event</option>
+                                <option value="announcement">Announcement</option>
+                            </select>
+                        </div>
+                        <div class="mb-3"><input type="date" name="event_date" class="form-control" placeholder="Event Date (optional)"></div>
+                        <button type="submit" class="btn btn-gold">Add Announcement</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Existing Announcements</h4>
+            {% for ann in announcements %}
+            <div class="card mb-2"><div class="card-body d-flex justify-content-between"><div><strong>{{ ann.title }}</strong><br><small>{{ ann.content[:100] }}</small></div><a href="{{ url_for('delete_announcement', id=ann.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a></div></div>
+            {% endfor %}
+        </div>
+        
+        <!-- Student Life Media Tab -->
+        <div class="tab-pane fade" id="studentlife">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add Media (Max 13 items)</h4>
+                    <form method="POST" action="{{ url_for('add_media') }}">
+                        <div class="mb-3"><input type="text" name="title" placeholder="Title" class="form-control" required></div>
+                        <div class="mb-3"><textarea name="description" placeholder="Description" class="form-control"></textarea></div>
+                        <div class="mb-3">
+                            <select name="media_type" class="form-select">
+                                <option value="image">Image</option>
+                                <option value="video">Video (YouTube Embed URL)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3"><input type="url" name="url" placeholder="Image URL or YouTube Embed URL" class="form-control" required></div>
+                        <div class="mb-3"><input type="number" name="order" placeholder="Display Order" class="form-control"></div>
+                        <button type="submit" class="btn btn-gold">Add Media</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Current Media ({{ media_items|length }}/13)</h4>
+            {% for media in media_items %}
+            <div class="card mb-2"><div class="card-body d-flex justify-content-between"><div><strong>{{ media.title }}</strong><br><small>{{ media.media_type }} - {{ media.url[:50] }}</small></div><a href="{{ url_for('delete_media', id=media.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a></div></div>
+            {% endfor %}
+        </div>
+        
+        <!-- Gallery Tab -->
+        <div class="tab-pane fade" id="gallery">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add Gallery Item</h4>
+                    <form method="POST" action="{{ url_for('add_gallery') }}">
+                        <div class="mb-3"><input type="text" name="title" placeholder="Title" class="form-control" required></div>
+                        <div class="mb-3"><textarea name="description" placeholder="Description" class="form-control"></textarea></div>
+                        <div class="mb-3"><select name="media_type" class="form-select"><option value="image">Image</option><option value="video">Video</option></select></div>
+                        <div class="mb-3"><input type="url" name="url" placeholder="Image/Video URL" class="form-control" required></div>
+                        <button type="submit" class="btn btn-gold">Add to Gallery</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Gallery Items</h4>
+            {% for item in gallery_items %}
+            <div class="card mb-2"><div class="card-body d-flex justify-content-between"><div><strong>{{ item.title }}</strong></div><a href="{{ url_for('delete_gallery', id=item.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a></div></div>
+            {% endfor %}
+        </div>
+        
+        <!-- Messages Tab -->
+        <div class="tab-pane fade" id="messages">
+            <h4>Contact Messages</h4>
+            {% for msg in contact_messages %}
+            <div class="card mb-2"><div class="card-body"><strong>{{ msg.name }}</strong> ({{ msg.email }})<br>{{ msg.message }}<br><small>{{ msg.created_at }}</small><br><a href="{{ url_for('delete_message', id=msg.id) }}" class="btn btn-sm btn-danger mt-2">Delete</a></div></div>
+            {% endfor %}
+        </div>
+        
+        <!-- Applications Tab -->
+        <div class="tab-pane fade" id="applications">
+            <h4>Admission Applications</h4>
+            {% for app in applications %}
+            <div class="card mb-2"><div class="card-body"><strong>{{ app.full_name }}</strong> - {{ app.grade_applying }}<br>Parent: {{ app.parent_name }}, Phone: {{ app.phone }}<br>{{ app.message }}<br><a href="{{ url_for('delete_application', id=app.id) }}" class="btn btn-sm btn-danger">Delete</a></div></div>
+            {% endfor %}
+        </div>
+        
+        <!-- Users Tab -->
+        <div class="tab-pane fade" id="users">
+            <h4>Registered Users</h4>
+            {% for user in users %}
+            <div class="card mb-2"><div class="card-body">{{ user.username }} - {{ user.phone }} {% if user.is_admin %}<span class="badge bg-gold">Admin</span>{% endif %}</div></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
