@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="section-title"><h2>Alumni - Mafanikio Yetu</h2><p>Wanafunzi wetu wa zamani wanaoangaza</p></div>
+    {% if featured %}
+    <div class="card mb-5"><div class="row g-0"><div class="col-md-4"><img src="{{ featured.image_url or 'https://via.placeholder.com/300' }}" class="img-fluid rounded-start"></div><div class="col-md-8"><div class="card-body"><h3 class="text-gold">{{ featured.name }}</h3><p><strong>Graduated:</strong> {{ featured.graduation_year }} | <strong>Now:</strong> {{ featured.current_occupation }}</p><p>{{ featured.story }}</p></div></div></div></div>
+    {% endif %}
+    <div class="row">{% for a in alumni %}<div class="col-md-4 mb-4"><div class="card h-100"><img src="{{ a.image_url or 'https://via.placeholder.com/300' }}" class="card-img-top"><div class="card-body"><h5 class="card-title text-gold">{{ a.name }}</h5><p class="text-muted">Class of {{ a.graduation_year }}</p><p>{{ a.current_occupation }}</p><p>{{ a.story[:100] }}{% if a.story|length > 100 %}...{% endif %}</p></div></div></div>{% endfor %}</div>
+</div>
+{% endblock %}
