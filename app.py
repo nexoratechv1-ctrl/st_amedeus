@@ -5,7 +5,6 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from functools import wraps
-import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'st-amedeus-secret-key-2024'
@@ -135,11 +134,12 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ------------------- EXISTING ROUTES -------------------
+# ------------------- CONTEXT PROCESSOR -------------------
 @app.context_processor
 def inject_user():
     return dict(current_user=current_user)
 
+# ------------------- EXISTING ROUTES (PUBLIC) -------------------
 @app.route('/')
 def home():
     latest_announcements = Announcement.query.order_by(Announcement.created_at.desc()).limit(3).all()
@@ -254,7 +254,7 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
 
-# ------------------- NEW ROUTES (Features) -------------------
+# ------------------- NEW FEATURE ROUTES -------------------
 @app.route('/results', methods=['GET', 'POST'])
 def results():
     result_data = None
@@ -332,11 +332,10 @@ def quiz():
                 feedback = f"❌ Sio sahihi. Jibu sahihi ni {correct_letter}: {correct_text}. {question.explanation}"
         else:
             feedback = "Swali halikupatikana."
-    # get random question (or any)
     question = QuizQuestion.query.order_by(db.func.random()).first()
     return render_template('quiz.html', question=question, score=score, feedback=feedback)
 
-# ------------------- ADMIN DASHBOARD (Updated) -------------------
+# ------------------- ADMIN DASHBOARD -------------------
 @app.route('/admin/dashboard')
 @login_required
 @admin_required
@@ -365,7 +364,103 @@ def admin_dashboard():
                          events=events,
                          quiz_questions=quiz_questions)
 
-# ------------------- ADMIN CRUD ROUTES (New) -------------------
+# ------------------- ADMIN CRUD FOR EXISTING FEATURES -------------------
+@app.route('/admin/add_announcement', methods=['POST'])
+@login_required
+@admin_required
+def add_announcement():
+    title = request.form.get('title')
+    content = request.form.get('content')
+    category = request.form.get('category')
+    event_date = request.form.get('event_date')
+    announcement = Announcement(title=title, content=content, category=category)
+    if event_date:
+        announcement.event_date = datetime.strptime(event_date, '%Y-%m-%d')
+    db.session.add(announcement)
+    db.session.commit()
+    flash('Announcement added successfully!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_announcement/<int:id>')
+@login_required
+@admin_required
+def delete_announcement(id):
+    announcement = Announcement.query.get_or_404(id)
+    db.session.delete(announcement)
+    db.session.commit()
+    flash('Announcement deleted!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_media', methods=['POST'])
+@login_required
+@admin_required
+def add_media():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    media_type = request.form.get('media_type')
+    url = request.form.get('url')
+    order = request.form.get('order', 0)
+    media = StudentLifeMedia(title=title, description=description, media_type=media_type, url=url, order=order)
+    db.session.add(media)
+    db.session.commit()
+    flash('Media item added to Student Life!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_media/<int:id>')
+@login_required
+@admin_required
+def delete_media(id):
+    media = StudentLifeMedia.query.get_or_404(id)
+    db.session.delete(media)
+    db.session.commit()
+    flash('Media item deleted!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_gallery', methods=['POST'])
+@login_required
+@admin_required
+def add_gallery():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    media_type = request.form.get('media_type')
+    url = request.form.get('url')
+    item = GalleryItem(title=title, description=description, media_type=media_type, url=url)
+    db.session.add(item)
+    db.session.commit()
+    flash('Gallery item added!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_gallery/<int:id>')
+@login_required
+@admin_required
+def delete_gallery(id):
+    item = GalleryItem.query.get_or_404(id)
+    db.session.delete(item)
+    db.session.commit()
+    flash('Gallery item deleted!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_message/<int:id>')
+@login_required
+@admin_required
+def delete_message(id):
+    message = ContactMessage.query.get_or_404(id)
+    db.session.delete(message)
+    db.session.commit()
+    flash('Message deleted!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_application/<int:id>')
+@login_required
+@admin_required
+def delete_application(id):
+    app_obj = AdmissionApplication.query.get_or_404(id)
+    db.session.delete(app_obj)
+    db.session.commit()
+    flash('Application deleted!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+# ------------------- ADMIN CRUD FOR NEW FEATURES -------------------
 @app.route('/admin/add_result', methods=['POST'])
 @login_required
 @admin_required
@@ -394,120 +489,3 @@ def add_result():
 @app.route('/admin/delete_result/<int:id>')
 @login_required
 @admin_required
-def delete_result(id):
-    result = ExamResult.query.get_or_404(id)
-    db.session.delete(result)
-    db.session.commit()
-    flash('Result deleted!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_suggestion/<int:id>')
-@login_required
-@admin_required
-def delete_suggestion(id):
-    s = Suggestion.query.get_or_404(id)
-    db.session.delete(s)
-    db.session.commit()
-    flash('Suggestion deleted', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_alumni', methods=['POST'])
-@login_required
-@admin_required
-def add_alumni():
-    name = request.form.get('name')
-    year = request.form.get('graduation_year')
-    occupation = request.form.get('occupation')
-    story = request.form.get('story')
-    image = request.form.get('image_url')
-    featured = request.form.get('is_featured') == 'on'
-    alumni = Alumni(name=name, graduation_year=year, current_occupation=occupation, story=story, image_url=image, is_featured=featured)
-    db.session.add(alumni)
-    db.session.commit()
-    flash('Alumni added!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_alumni/<int:id>')
-@login_required
-@admin_required
-def delete_alumni(id):
-    a = Alumni.query.get_or_404(id)
-    db.session.delete(a)
-    db.session.commit()
-    flash('Deleted', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_event', methods=['POST'])
-@login_required
-@admin_required
-def add_event():
-    title = request.form.get('title')
-    description = request.form.get('description')
-    event_date_str = request.form.get('event_date')
-    location = request.form.get('location')
-    event_date = datetime.strptime(event_date_str, '%Y-%m-%dT%H:%M')
-    event = Event(title=title, description=description, event_date=event_date, location=location)
-    db.session.add(event)
-    db.session.commit()
-    flash('Event added!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_event/<int:id>')
-@login_required
-@admin_required
-def delete_event(id):
-    e = Event.query.get_or_404(id)
-    db.session.delete(e)
-    db.session.commit()
-    flash('Event deleted', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_quiz', methods=['POST'])
-@login_required
-@admin_required
-def add_quiz():
-    q = request.form.get('question')
-    a = request.form.get('opt_a')
-    b = request.form.get('opt_b')
-    c = request.form.get('opt_c')
-    d = request.form.get('opt_d')
-    correct = request.form.get('correct_answer')
-    explanation = request.form.get('explanation')
-    quiz = QuizQuestion(question=q, option_a=a, option_b=b, option_c=c, option_d=d, correct_answer=correct, explanation=explanation)
-    db.session.add(quiz)
-    db.session.commit()
-    flash('Quiz question added!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_quiz/<int:id>')
-@login_required
-@admin_required
-def delete_quiz(id):
-    q = QuizQuestion.query.get_or_404(id)
-    db.session.delete(q)
-    db.session.commit()
-    flash('Quiz question deleted', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-# ------------------- EXISTING ADMIN ROUTES (Announcements, Media, Gallery, etc.) -------------------
-# ... (keep all previous admi
-# ... (keep all previous admin routes like add_announcement, delete_announcement, add_media, delete_media, add_gallery, delete_gallery, delete_message, delete_application) ...
-# To save space, I assume you already have them. If not, they are in the original code.
-
-# ------------------- CREATE ADMIN USER & TABLES -------------------
-def init_admin():
-    admin = User.query.filter_by(username='admin').first()
-    if not admin:
-        admin = User(username='admin', phone='+255700000000', is_admin=True)
-        admin.set_password('admin123')
-        db.session.add(admin)
-        db.session.commit()
-        print("Admin user created: username 'admin', password 'admin123'")
-
-with app.app_context():
-    db.create_all()
-    init_admin()
-
-if __name__ == '__main__':
-    app.run()
-```
