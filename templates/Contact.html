@@ -1,0 +1,56 @@
+{# templates/contact.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="section-title">
+        <h2>Wasiliana Nasi</h2>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="text-gold">Mawasiliano</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> <strong>Anuani:</strong> P.O. Box 123, Dar es Salaam, Tanzania</p>
+                    <p><i class="fas fa-phone"></i> <strong>Simu:</strong> +255 222 123 456 / +255 755 123 456</p>
+                    <p><i class="fas fa-envelope"></i> <strong>Barua Pepe:</strong> info@stamedeus.ac.tz</p>
+                    <p><i class="fas fa-clock"></i> <strong>Saa za Kazi:</strong> Jumatatu - Ijumaa: 8:00am - 5:00pm</p>
+                    <hr class="border-gold">
+                    <h5>Ramani ya Eneo</h5>
+                    <div class="ratio ratio-16x9">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.5019181816856!2d39.267785!3d-6.816111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x185c4b1e3b2c3d6b%3A0x2c8b3f7a8e5d6c9a!2sDar%20es%20Salaam%2C%20Tanzania!5e0!3m2!1sen!2s!4v1690000000000!5m2!1sen!2s" allowfullscreen="" loading="lazy"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="text-gold">Tutumie Ujumbe</h4>
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label>Jina Lako</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Barua Pepe</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Namba ya Simu</label>
+                            <input type="tel" name="phone" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label>Ujumbe</label>
+                            <textarea name="message" rows="5" class="form-control" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-gold w-100">Tuma Ujumbe</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
