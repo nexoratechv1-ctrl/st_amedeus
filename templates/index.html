@@ -1,1 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div id="heroCarousel" class="carousel slide hero-carousel mt-5 pt-4" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')">
+            <div class="carousel-caption text-center"><h1>St. Amedeus High School</h1><p class="lead">"Brave, Skillful, Competence, Crown"</p><div class="mt-4"><a href="{{ url_for('admissions') }}" class="btn btn-gold me-3">Apply Now</a><a href="{{ url_for('results') }}" class="btn btn-outline-gold me-3">View Results</a><a href="{{ url_for('contact') }}" class="btn btn-outline-gold">Contact Us</a></div></div>
+        </div>
+        <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')">
+            <div class="carousel-caption text-center"><h1>Excellence in Education</h1><p>Building future leaders with skills and competence</p></div>
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+</div>
 
+<div class="container my-5 py-4">
+    <div class="section-title"><h2>Welcome to St. Amedeus</h2></div>
+    <p class="lead text-center">Our motto "Brave, Skillful, Competence, Crown" reflects our commitment to nurturing students who are courageous, skilled, competent, and destined for greatness.</p>
+</div>
+
+<div class="container my-5">
+    <div class="section-title"><h2>Latest Announcements</h2></div>
+    <div class="row">
+        {% for ann in announcements %}
+        <div class="col-md-4 mb-4"><div class="card h-100"><div class="card-body"><h5 class="card-title">{{ ann.title }}</h5><p class="card-text">{{ ann.content[:150] }}...</p><small class="text-muted">{{ ann.created_at.strftime('%B %d, %Y') }}</small></div></div></div>
+        {% else %}
+        <div class="col-12 text-center"><p>No announcements yet.</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
