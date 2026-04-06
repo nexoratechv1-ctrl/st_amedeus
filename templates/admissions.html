@@ -1,1 +1,10 @@
-
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="section-title"><h2>Jiunge Nasi</h2></div>
+    <div class="row"><div class="col-lg-6 mx-auto">
+        <div class="card mb-4"><div class="card-body"><h4>Ada za Masomo</h4><p>Form 1-4: TZS 1,200,000 kwa mwaka<br>Form 5-6: TZS 1,500,000 kwa mwaka</p></div></div>
+        <div class="card"><div class="card-body"><h4>Fomu ya Maombi</h4><form method="POST"><div class="mb-3"><input type="text" name="full_name" placeholder="Jina Kamili" class="form-control" required></div><div class="mb-3"><input type="text" name="parent_name" placeholder="Jina la Mzazi" class="form-control" required></div><div class="mb-3"><input type="email" name="email" placeholder="Barua Pepe" class="form-control" required></div><div class="mb-3"><input type="tel" name="phone" placeholder="Namba ya Simu" class="form-control" required></div><div class="mb-3"><input type="date" name="date_of_birth" class="form-control" required></div><div class="mb-3"><select name="grade_applying" class="form-select"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option><option>Form 5</option><option>Form 6</option></select></div><textarea name="message" class="form-control" placeholder="Ujumbe"></textarea><button type="submit" class="btn btn-gold w-100 mt-3">Tuma Maombi</button></form></div></div>
+    </div></div>
+</div>
+{% endblock %}
