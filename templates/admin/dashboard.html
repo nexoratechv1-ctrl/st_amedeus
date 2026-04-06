@@ -253,15 +253,7 @@
                 </div>
             </div>
             <h4>Upcoming Events</h4>
-            {% for e in events if e.event_date >= now %}
-            <div class="card mb-2">
-                <div class="card-body d-flex justify-content-between">
-                    <div><strong>{{ e.title }}</strong> - {{ e.event_date.strftime('%d %b %Y %H:%M') }}<br>{{ e.description }}</div>
-                    <a href="{{ url_for('delete_event', id=e.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+        
 
         <!-- ==================== QUIZ TAB ==================== -->
         <div class="tab-pane fade" id="quiz">
