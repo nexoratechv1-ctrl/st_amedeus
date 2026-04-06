@@ -1,1 +1,7 @@
-
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="section-title"><h2>Habari na Matukio</h2></div>
+    <div class="row"><div class="col-lg-8 mx-auto">{% for ann in announcements %}<div class="card mb-4"><div class="card-body"><h4>{{ ann.title }}</h4><p>{{ ann.content }}</p><small>{{ ann.created_at.strftime('%B %d, %Y') }}</small></div></div>{% else %}<p>Hakuna habari.</p>{% endfor %}</div></div>
+</div>
+{% endblock %}
