@@ -1,1 +1,4 @@
-
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 pt-5"><div class="section-title"><h2>Matokeo ya Mitihani</h2></div><div class="row"><div class="col-md-6 mx-auto"><div class="card"><div class="card-body"><form method="POST"><div class="mb-3"><input type="text" name="index_number" placeholder="Index Number (S1234/2024)" class="form-control" required></div><div class="mb-3"><select name="exam_type" class="form-select"><option>Form Four</option><option>Form Six</option></select></div><button type="submit" class="btn btn-gold w-100">Angalia</button></form></div></div>{% if error %}<div class="alert alert-danger mt-3">{{ error }}</div>{% endif %}{% if result %}<div class="card mt-4"><div class="card-body"><h4>{{ result.name }}</h4><p>Index: {{ result.index }} | Mwaka: {{ result.year }} | Division: {{ result.division }}</p><h5>Masomo</h5><ul>{% for s in result.subjects %}<li>{{ s.name }}: {{ s.marks }}</li>{% endfor %}</ul><p>Jumla: {{ result.total }}</p></div></div>{% endif %}</div></div></div>
+{% endblock %}
