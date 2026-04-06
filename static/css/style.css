@@ -1,10 +1,12 @@
-/* ========== ST. AMEDEUS - ULTRA PREMIUM DECORATION ========== */
+/* ========== ST. AMEDEUS - SUPREME READABLE GLOWING THEME ========== */
 :root {
     --gold: #ffd700;
-    --gold-glow: #ffb800;
-    --dark-overlay: rgba(0, 0, 0, 0.75);
-    --text-light: #ffffff;
-    --card-bg: rgba(10, 10, 10, 0.85);
+    --gold-glow: #ffcc00;
+    --text-white: #ffffff;
+    --text-light: #f5f5f5;
+    --bg-dark: #0a0a0a;
+    --card-bg: rgba(15, 15, 20, 0.9);
+    --overlay: rgba(0, 0, 0, 0.75);
 }
 
 * {
@@ -14,29 +16,46 @@
 }
 
 body {
-    font-family: 'Poppins', 'Segoe UI', 'Montserrat', sans-serif;
-    color: var(--text-light);
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-white) !important;  /* ALL TEXT WHITE */
+    line-height: 1.7;
     overflow-x: hidden;
-    position: relative;
-    min-height: 100vh;
-    background: #000;
 }
 
-/* ---------- VIDEO BACKGROUND (or animated gradient fallback) ---------- */
+/* Make sure all text is white unless specified */
+body, p, li, span, div, .card-text, .form-label, .table, .alert, .navbar-nav .nav-link, .btn, .footer p, .footer a, .list-unstyled, small, .text-muted {
+    color: var(--text-white) !important;
+}
+
+/* Headings: gold + strong glow */
+h1, h2, h3, h4, h5, h6, .section-title h2, .card-title, .navbar-brand, .footer h5, .text-gold {
+    color: var(--gold) !important;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 15px rgba(255, 215, 0, 0.3);
+    font-weight: 700;
+}
+
+/* Links */
+a {
+    color: var(--gold) !important;
+    transition: all 0.3s;
+}
+a:hover {
+    color: #fff3b0 !important;
+    text-shadow: 0 0 5px var(--gold);
+}
+
+/* ---------- BACKGROUND VIDEO & OVERLAY ---------- */
 #bg-video {
     position: fixed;
     top: 0;
     left: 0;
     min-width: 100%;
     min-height: 100%;
-    width: auto;
-    height: auto;
-    z-index: -2;
     object-fit: cover;
-    filter: brightness(0.5) contrast(1.2);
+    z-index: -2;
+    filter: brightness(0.5);
 }
-
-/* If video fails, animated gradient backup */
 body::before {
     content: "";
     position: fixed;
@@ -44,220 +63,198 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at 20% 30%, #1a1a2e, #0a0a0a);
-    z-index: -3;
+    background: rgba(0,0,0,0.7);
+    z-index: -1;
 }
 
-/* Floating moving particles/geometric shapes */
+/* Floating decorative shapes (soft) */
 .shape {
     position: fixed;
-    background: rgba(255, 215, 0, 0.1);
+    background: rgba(255, 215, 0, 0.08);
     border-radius: 50%;
     filter: blur(60px);
     z-index: -1;
-    animation: floatShape 20s infinite ease-in-out;
+    animation: floatShape 20s infinite;
 }
-
-.shape1 { width: 300px; height: 300px; top: 10%; left: -100px; animation-delay: 0s; }
-.shape2 { width: 500px; height: 500px; bottom: -150px; right: -150px; animation-delay: 5s; background: rgba(255, 200, 0, 0.08); }
-.shape3 { width: 200px; height: 200px; top: 50%; left: 70%; animation-delay: 2s; background: rgba(255, 215, 0, 0.15); }
-
+.shape1 { width: 400px; height: 400px; top: -100px; left: -100px; }
+.shape2 { width: 600px; height: 600px; bottom: -200px; right: -150px; background: rgba(255,200,0,0.05);}
+.shape3 { width: 250px; height: 250px; top: 50%; left: 70%; background: rgba(255,215,0,0.1);}
 @keyframes floatShape {
-    0% { transform: translate(0, 0) scale(1); opacity: 0.3; }
-    50% { transform: translate(50px, 30px) scale(1.2); opacity: 0.6; }
-    100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+    0% { transform: translate(0,0) scale(1); opacity: 0.3; }
+    50% { transform: translate(30px,20px) scale(1.1); opacity: 0.5; }
+    100% { transform: translate(0,0) scale(1); opacity: 0.3; }
 }
 
-/* ---------- NAVBAR (Glossy) ---------- */
+/* ---------- NAVBAR (dark glass) ---------- */
 .navbar {
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(15px);
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(12px);
     border-bottom: 2px solid var(--gold);
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-    transition: all 0.3s;
+    box-shadow: 0 0 20px rgba(255,215,0,0.3);
 }
-
 .navbar-brand {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
     font-weight: 800;
-    background: linear-gradient(135deg, var(--gold), #fff0a0);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent !important;
-    text-shadow: 0 0 8px rgba(255,215,0,0.5);
+    letter-spacing: 1px;
 }
-
 .nav-link {
     font-weight: 500;
     transition: 0.3s;
     margin: 0 5px;
-    position: relative;
 }
-
 .nav-link:hover {
     color: var(--gold) !important;
-    text-shadow: 0 0 5px rgba(255,215,0,0.8);
     transform: translateY(-2px);
+    text-shadow: 0 0 8px var(--gold);
 }
 
-/* ---------- BUTTONS (3D Gold) ---------- */
+/* ---------- BUTTONS ---------- */
 .btn-gold {
-    background: linear-gradient(145deg, #ffd700, #e6b800);
-    border: none;
-    color: #000;
+    background: linear-gradient(135deg, var(--gold), #e6b800);
+    color: #000 !important;
     font-weight: bold;
-    padding: 12px 30px;
-    border-radius: 50px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3), 0 0 10px rgba(255,215,0,0.5);
-    transition: all 0.3s;
+    padding: 10px 28px;
+    border-radius: 40px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: 0.3s;
 }
-
 .btn-gold:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 25px rgba(255,215,0,0.6);
-    background: linear-gradient(145deg, #ffe44d, #ffd700);
+    transform: scale(1.03);
+    box-shadow: 0 0 15px var(--gold);
+    color: #000 !important;
 }
-
 .btn-outline-gold {
     border: 2px solid var(--gold);
     background: transparent;
-    color: var(--gold);
-    border-radius: 50px;
-    padding: 10px 25px;
+    color: var(--gold) !important;
+    border-radius: 40px;
+    padding: 8px 22px;
     font-weight: bold;
-    transition: 0.3s;
 }
-
 .btn-outline-gold:hover {
     background: var(--gold);
-    color: #000;
-    box-shadow: 0 0 15px var(--gold);
-    transform: translateY(-2px);
+    color: #000 !important;
+    box-shadow: 0 0 12px var(--gold);
 }
 
-/* ---------- CARDS (Glassmorphism) ---------- */
+/* ---------- CARDS (glass, readable) ---------- */
 .card {
-    background: rgba(20, 20, 30, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 215, 0, 0.4);
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,215,0,0.4);
     border-radius: 24px;
-    transition: 0.4s;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    transition: 0.3s;
+    margin-bottom: 20px;
 }
-
 .card:hover {
-    transform: translateY(-10px);
+    transform: translateY(-6px);
     border-color: var(--gold);
-    box-shadow: 0 15px 35px rgba(255,215,0,0.2), 0 0 15px rgba(255,215,0,0.4);
+    box-shadow: 0 10px 25px rgba(255,215,0,0.2);
 }
-
 .card-title {
-    color: var(--gold);
-    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+}
+.card-text, .card p {
+    color: var(--text-light) !important;
 }
 
-/* ---------- FORMS – Placeholder visible fix ---------- */
+/* ---------- FORMS (visible placeholders, white text) ---------- */
 .form-control, .form-select {
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(255, 215, 0, 0.5);
-    color: white;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255,215,0,0.5);
+    color: white !important;
     border-radius: 16px;
     padding: 12px 18px;
-    transition: 0.3s;
 }
-
 .form-control:focus, .form-select:focus {
-    background: rgba(0,0,0,0.85);
+    background: #1a1a1a;
     border-color: var(--gold);
-    box-shadow: 0 0 12px rgba(255,215,0,0.6);
-    color: white;
+    box-shadow: 0 0 10px var(--gold);
+    color: white !important;
 }
-
-/* MAKE PLACEHOLDER VISIBLE (light gold) */
-.form-control::placeholder,
-.form-select::placeholder {
-    color: #ffddaa !important;
+/* PLACEHOLDER – bright goldish, fully visible */
+.form-control::placeholder, .form-select::placeholder {
+    color: #ffdd99 !important;
     opacity: 1;
     font-weight: 400;
 }
-
-/* Labels */
 label {
-    color: var(--gold);
+    color: var(--gold) !important;
     font-weight: 500;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
 
-/* ---------- HERO SECTION (Carousel over background) ---------- */
+/* ---------- CAROUSEL ---------- */
 .hero-carousel {
     margin-top: 76px;
     border-radius: 0 0 30px 30px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-
 .carousel-item {
     height: 85vh;
     background-size: cover;
     background-position: center;
-    position: relative;
 }
-
 .carousel-item::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.3));
+    top:0;left:0;right:0;bottom:0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4));
 }
-
+.carousel-caption {
+    bottom: 25%;
+    z-index: 2;
+}
 .carousel-caption h1 {
-    font-size: 4rem;
-    text-shadow: 0 0 20px gold;
-    animation: fadeInUp 1s;
+    font-size: 3.5rem;
+    text-shadow: 0 0 20px black, 0 0 10px gold;
+}
+.carousel-caption p {
+    font-size: 1.2rem;
+    text-shadow: 0 0 5px black;
 }
 
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
+/* ---------- SECTION TITLES ---------- */
+.section-title {
+    text-align: center;
+    margin-bottom: 50px;
 }
-
-/* ---------- SECTION TITLES WITH GLOW ---------- */
 .section-title h2 {
-    font-size: 2.8rem;
-    background: linear-gradient(135deg, #ffd700, #ffb347);
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--gold), #ffe180);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     display: inline-block;
-    text-shadow: 0 0 10px rgba(255,215,0,0.5);
 }
-
 .section-title::after {
     content: '';
     display: block;
     width: 100px;
-    height: 4px;
-    background: linear-gradient(90deg, gold, transparent);
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), transparent);
     margin: 15px auto;
-    border-radius: 2px;
 }
 
 /* ---------- FOOTER ---------- */
 .footer {
-    background: rgba(0,0,0,0.9);
-    border-top: 2px solid gold;
-    backdrop-filter: blur(8px);
-    margin-top: 60px;
+    background: #030303;
+    border-top: 2px solid var(--gold);
     padding: 40px 0 20px;
+    margin-top: 50px;
+}
+.footer a:hover {
+    text-shadow: 0 0 5px gold;
 }
 
 /* ---------- COUNTDOWN ---------- */
 .countdown {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: bold;
-    color: gold;
+    color: var(--gold);
     text-shadow: 0 0 8px gold;
-    letter-spacing: 1px;
 }
 
 /* ---------- WHATSAPP FLOAT ---------- */
@@ -265,26 +262,28 @@ label {
     position: fixed;
     bottom: 25px;
     right: 25px;
-    background-color: #25d366;
+    background: #25d366;
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     text-align: center;
-    line-height: 60px;
-    font-size: 32px;
+    line-height: 55px;
+    font-size: 30px;
     color: white;
     z-index: 1000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     transition: 0.3s;
 }
 .whatsapp-float:hover {
-    transform: scale(1.1);
-    background-color: #20b859;
+    transform: scale(1.08);
+    background: #20b859;
+    box-shadow: 0 0 15px #25d366;
 }
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 768px) {
-    .carousel-caption h1 { font-size: 2rem; }
+    .carousel-caption h1 { font-size: 1.8rem; }
     .section-title h2 { font-size: 1.8rem; }
-    .navbar-brand { font-size: 1.3rem; }
-    }
+    .navbar-brand { font-size: 1.2rem; }
+    .btn-gold, .btn-outline-gold { padding: 6px 16px; }
+         }
