@@ -195,7 +195,7 @@ def contact():
             email=request.form.get('email'),
             phone=request.form.get('phone'),
             message=request.form.get('message')
-        )
+        
         db.session.add(message)
         db.session.commit()
         flash('Your message has been sent. We will get back to you shortly!', 'success')
@@ -351,7 +351,6 @@ def admin_dashboard():
     alumni_list = Alumni.query.all()
     events = Event.query.order_by(Event.event_date.desc()).all()
     quiz_questions = QuizQuestion.query.all()
-    now = datetime.utcnow()
     return render_template('admin/dashboard.html', 
                          announcements=announcements,
                          media_items=media_items,
@@ -363,7 +362,7 @@ def admin_dashboard():
                          suggestions=suggestions,
                          alumni_list=alumni_list,
                          events=events,
-                         quiz_questions=quiz_questions,now=now)
+                         quiz_questions=quiz_questions)
 
 # ------------------- ADMIN CRUD FOR EXISTING FEATURES -------------------
 @app.route('/admin/add_announcement', methods=['POST'])
