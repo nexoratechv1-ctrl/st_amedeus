@@ -1,1 +1,9 @@
-
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="section-title"><h2>Maisha ya Wanafunzi</h2></div>
+    <div class="row mb-5"><div class="col-md-4"><div class="card text-center p-4"><i class="fas fa-futbol fa-3x text-gold"></i><h4>Michezo</h4><p>Soka, Basketball, Swimming</p></div></div><div class="col-md-4"><div class="card text-center p-4"><i class="fas fa-microphone fa-3x text-gold"></i><h4>Clubs</h4><p>IT Club, Debate Club</p></div></div><div class="col-md-4"><div class="card text-center p-4"><i class="fas fa-music fa-3x text-gold"></i><h4>Talent Day 🔥</h4><p>Kila mwisho wa muhula</p></div></div></div>
+    <div class="section-title"><h2>Picha na Video</h2></div>
+    <div class="row">{% for item in media_items %}<div class="col-md-4 mb-4"><div class="gallery-item">{% if item.media_type == 'image' %}<img src="{{ item.url }}" class="img-fluid">{% else %}<iframe src="{{ item.url }}" frameborder="0"></iframe>{% endif %}<div class="p-3"><h5>{{ item.title }}</h5><p>{{ item.description }}</p></div></div></div>{% else %}<p class="text-center">Hakuna media. Admin anaweza kuongeza.</p>{% endfor %}</div>
+</div>
+{% endblock %}
