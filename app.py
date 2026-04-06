@@ -3,13 +3,26 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime
 from functools import wraps
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'st-amedeus-secret'
+app.config['SECRET_KEY'] = 'st-amedeus-secret-key-2024'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///school.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Upload configuration
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi', 'webm'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -42,20 +55,23 @@ class StudentLifeMedia(db.Model):
     media_type = db.Column(db.String(20), default='image')
     url = db.Column(db.String(500), nullable=False)
     order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class GalleryItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
+    description = db.Column(db.Text, nullable=True)
     media_type = db.Column(db.String(20), default='image')
     url = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class ContactMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20))
+    phone = db.Column(db.String(20), nullable=True)
     message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class AdmissionApplication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,9 +80,10 @@ class AdmissionApplication(db.Model):
     email = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     date_of_birth = db.Column(db.String(50), nullable=False)
-    previous_school = db.Column(db.String(200))
+    previous_school = db.Column(db.String(200), nullable=True)
     grade_applying = db.Column(db.String(50), nullable=False)
-    message = db.Column(db.Text)
+    message = db.Column(db.Text, nullable=True)
+    applied_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class ExamResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -110,7 +127,7 @@ class QuizQuestion(db.Model):
     correct_answer = db.Column(db.String(1))
     explanation = db.Column(db.Text)
 
-# ------------------- HELPERS -------------------
+# ------------------- LOGIN HELPERS -------------------
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -119,7 +136,7 @@ def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if not current_user.is_authenticated or not current_user.is_admin:
-            flash('Access denied.', 'danger')
+            flash('Access denied. Admin privileges required.', 'danger')
             return redirect(url_for('home'))
         return f(*args, **kwargs)
     return decorated
@@ -160,7 +177,7 @@ def gallery():
 @app.route('/admissions', methods=['GET', 'POST'])
 def admissions():
     if request.method == 'POST':
-        app = AdmissionApplication(
+        app_obj = AdmissionApplication(
             full_name=request.form.get('full_name'),
             parent_name=request.form.get('parent_name'),
             email=request.form.get('email'),
@@ -170,7 +187,7 @@ def admissions():
             grade_applying=request.form.get('grade_applying'),
             message=request.form.get('message')
         )
-        db.session.add(app)
+        db.session.add(app_obj)
         db.session.commit()
         flash('Application submitted!', 'success')
         return redirect(url_for('admissions'))
@@ -236,7 +253,7 @@ def results():
     result = None
     error = None
     if request.method == 'POST':
-        idx = request.form.get('index_number').strip().upper()
+        idx = request.form.get('index_number', '').strip().upper()
         exam = request.form.get('exam_type')
         r = ExamResult.query.filter_by(index_number=idx, exam_type=exam).first()
         if r:
@@ -246,7 +263,8 @@ def results():
                     if ':' in s:
                         subj, mark = s.split(':')
                         subjects.append({'name': subj, 'marks': mark})
-            result = {'name': r.student_name, 'index': r.index_number, 'year': r.year, 'division': r.division, 'total': r.total_marks, 'subjects': subjects}
+            result = {'name': r.student_name, 'index': r.index_number, 'year': r.year,
+                      'division': r.division, 'total': r.total_marks, 'subjects': subjects}
         else:
             error = 'No results found.'
     return render_template('results.html', result=result, error=error)
@@ -269,8 +287,9 @@ def alumni():
 
 @app.route('/events')
 def events():
-    upcoming = Event.query.filter(Event.event_date >= datetime.utcnow()).order_by(Event.event_date).all()
-    past = Event.query.filter(Event.event_date < datetime.utcnow()).order_by(Event.event_date.desc()).limit(5).all()
+    now = datetime.utcnow()
+    upcoming = Event.query.filter(Event.event_date >= now).order_by(Event.event_date).all()
+    past = Event.query.filter(Event.event_date < now).order_by(Event.event_date.desc()).limit(5).all()
     return render_template('events.html', upcoming=upcoming, past=past)
 
 @app.route('/quiz', methods=['GET', 'POST'])
@@ -289,7 +308,7 @@ def quiz():
                 feedback = f"❌ Wrong. Correct: {q.correct_answer} - {correct_text}"
     return render_template('quiz.html', question=question, feedback=feedback)
 
-# AI Assistant (simple, no API key needed)
+# ------------------- AI ASSISTANT (Simple Fallback) -------------------
 @app.route('/ai-assistant', methods=['GET', 'POST'])
 def ai_assistant():
     response = None
@@ -302,9 +321,9 @@ def ai_assistant():
             elif any(w in low for w in ['mitihani', 'exam', 'matokeo']):
                 response = "Matokeo yanapatikana kwa index number kwenye Results."
             elif any(w in low for w in ['admission', 'jiunge']):
-                response = "Jaza fomu kwenye ukurasa wa Admissions."
+                response = "Jaza fomu kwenye Admissions."
             else:
-                response = "Asante kwa swali. Wasiliana nasi kwenye Contact page."
+                response = "Asante kwa swali. Wasiliana nasi kwenye Contact."
         else:
             response = "Andika swali lako."
     return render_template('ai_assistant.html', response=response)
@@ -327,8 +346,9 @@ def admin_dashboard():
     quiz_questions = QuizQuestion.query.all()
     return render_template('admin/dashboard.html', **locals())
 
-# ------------------- ADMIN CRUD (minimal but complete) -------------------
+# ------------------- ADMIN CRUD WITH UPLOAD -------------------
 @app.route('/admin/add_announcement', methods=['POST'])
+@login_required
 @admin_required
 def add_announcement():
     a = Announcement(title=request.form['title'], content=request.form['content'], category=request.form['category'])
@@ -336,138 +356,157 @@ def add_announcement():
         a.event_date = datetime.strptime(request.form['event_date'], '%Y-%m-%d')
     db.session.add(a)
     db.session.commit()
-    flash('Added', 'success')
+    flash('Announcement added', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_announcement/<int:id>')
+@login_required
 @admin_required
 def delete_announcement(id):
-    db.session.delete(Announcement.query.get(id))
+    db.session.delete(Announcement.query.get_or_404(id))
     db.session.commit()
+    flash('Deleted', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add_media', methods=['POST'])
+@login_required
 @admin_required
 def add_media():
-    m = StudentLifeMedia(title=request.form['title'], description=request.form.get('description',''), media_type=request.form['media_type'], url=request.form['url'], order=int(request.form.get('order',0)))
-    db.session.add(m)
+    title = request.form.get('title')
+    description = request.form.get('description')
+    media_type = request.form.get('media_type')
+    order = int(request.form.get('order', 0))
+    file = request.files.get('file')
+    file_url = request.form.get('url')
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        name, ext = os.path.splitext(filename)
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        new_filename = f"{name}_{timestamp}{ext}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+        file_url = url_for('static', filename=f'uploads/{new_filename}')
+    elif not file_url:
+        flash('Please provide a file or external URL', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    
+    media = StudentLifeMedia(title=title, description=description, media_type=media_type, url=file_url, order=order)
+    db.session.add(media)
     db.session.commit()
+    flash('Media added', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_media/<int:id>')
+@login_required
 @admin_required
 def delete_media(id):
-    db.session.delete(StudentLifeMedia.query.get(id))
+    media = StudentLifeMedia.query.get_or_404(id)
+    db.session.delete(media)
     db.session.commit()
+    flash('Deleted', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add_gallery', methods=['POST'])
+@login_required
 @admin_required
 def add_gallery():
-    g = GalleryItem(title=request.form['title'], description=request.form.get('description',''), media_type=request.form['media_type'], url=request.form['url'])
-    db.session.add(g)
+    title = request.form.get('title')
+    description = request.form.get('description')
+    media_type = request.form.get('media_type')
+    file = request.files.get('file')
+    file_url = request.form.get('url')
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        name, ext = os.path.splitext(filename)
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        new_filename = f"{name}_{timestamp}{ext}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+        file_url = url_for('static', filename=f'uploads/{new_filename}')
+    elif not file_url:
+        flash('Please provide a file or external URL', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    
+    item = GalleryItem(title=title, description=description, media_type=media_type, url=file_url)
+    db.session.add(item)
     db.session.commit()
+    flash('Gallery item added', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_gallery/<int:id>')
+@login_required
 @admin_required
 def delete_gallery(id):
-    db.session.delete(GalleryItem.query.get(id))
+    item = GalleryItem.query.get_or_404(id)
+    db.session.delete(item)
     db.session.commit()
+    flash('Deleted', 'success')
     return redirect(url_for('admin_dashboard'))
 
+# Other delete routes (keep existing ones for messages, applications, etc.)
 @app.route('/admin/delete_message/<int:id>')
+@login_required
 @admin_required
 def delete_message(id):
-    db.session.delete(ContactMessage.query.get(id))
+    db.session.delete(ContactMessage.query.get_or_404(id))
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_application/<int:id>')
+@login_required
 @admin_required
 def delete_application(id):
-    db.session.delete(AdmissionApplication.query.get(id))
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_result', methods=['POST'])
-@admin_required
-def add_result():
-    r = ExamResult(index_number=request.form['index_number'].upper(), student_name=request.form['student_name'], exam_type=request.form['exam_type'], year=request.form['year'], subjects=request.form.get('subjects',''), total_marks=request.form.get('total_marks',0), division=request.form.get('division',''))
-    db.session.add(r)
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_result/<int:id>')
-@admin_required
-def delete_result(id):
-    db.session.delete(ExamResult.query.get(id))
+    db.session.delete(AdmissionApplication.query.get_or_404(id))
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_suggestion/<int:id>')
+@login_required
 @admin_required
 def delete_suggestion(id):
-    db.session.delete(Suggestion.query.get(id))
+    db.session.delete(Suggestion.query.get_or_404(id))
+    db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_result', methods=['POST'])
+@login_required
+@admin_required
+def add_result():
+    r = ExamResult(
+        index_number=request.form['index_number'].upper(),
+        student_name=request.form['student_name'],
+        exam_type=request.form['exam_type'],
+        year=request.form['year'],
+        subjects=request.form.get('subjects', ''),
+        total_marks=request.form.get('total_marks', 0),
+        division=request.form.get('division', '')
+    )
+    db.session.add(r)
+    db.session.commit()
+    flash('Result added', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_result/<int:id>')
+@login_required
+@admin_required
+def delete_result(id):
+    db.session.delete(ExamResult.query.get_or_404(id))
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add_alumni', methods=['POST'])
+@login_required
 @admin_required
 def add_alumni():
-    a = Alumni(name=request.form['name'], graduation_year=request.form.get('graduation_year'), current_occupation=request.form.get('occupation'), story=request.form.get('story'), image_url=request.form.get('image_url'), is_featured=(request.form.get('is_featured')=='on'))
+    a = Alumni(
+        name=request.form['name'],
+        graduation_year=request.form.get('graduation_year'),
+        current_occupation=request.form.get('occupation'),
+        story=request.form.get('story'),
+        image_url=request.form.get('image_url'),
+        is_featured=(request.form.get('is_featured') == 'on')
+    )
     db.session.add(a)
     db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_alumni/<int:id>')
-@admin_required
-def delete_alumni(id):
-    db.session.delete(Alumni.query.get(id))
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_event', methods=['POST'])
-@admin_required
-def add_event():
-    e = Event(title=request.form['title'], description=request.form.get('description',''), event_date=datetime.strptime(request.form['event_date'], '%Y-%m-%dT%H:%M'), location=request.form.get('location',''))
-    db.session.add(e)
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_event/<int:id>')
-@admin_required
-def delete_event(id):
-    db.session.delete(Event.query.get(id))
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_quiz', methods=['POST'])
-@admin_required
-def add_quiz():
-    q = QuizQuestion(question=request.form['question'], option_a=request.form['opt_a'], option_b=request.form['opt_b'], option_c=request.form['opt_c'], option_d=request.form['opt_d'], correct_answer=request.form['correct_answer'], explanation=request.form.get('explanation',''))
-    db.session.add(q)
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_quiz/<int:id>')
-@admin_required
-def delete_quiz(id):
-    db.session.delete(QuizQuestion.query.get(id))
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-# ------------------- INIT -------------------
-def init_admin():
-    if not User.query.filter_by(username='admin').first():
-        admin = User(username='admin', phone='+255700000000', is_admin=True)
-        admin.set_password('admin123')
-        db.session.add(admin)
-        db.session.commit()
-
-with app.app_context():
-    db.create_all()
-    init_admin()
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    flash('Alumni added', 'success')
+    
