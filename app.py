@@ -351,6 +351,7 @@ def admin_dashboard():
     alumni_list = Alumni.query.all()
     events = Event.query.order_by(Event.event_date.desc()).all()
     quiz_questions = QuizQuestion.query.all()
+    
     return render_template('admin/dashboard.html', 
                          announcements=announcements,
                          media_items=media_items,
