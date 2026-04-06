@@ -1,1 +1,5 @@
-
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 pt-5"><div class="section-title"><h2>Matukio Yajayo</h2></div><div class="row">{% for e in upcoming %}<div class="col-md-4 mb-4"><div class="card"><div class="card-body"><h5 class="card-title">{{ e.title }}</h5><p>{{ e.description }}</p><p>{{ e.event_date.strftime('%d %b %Y, %H:%M') }}</p><p>{{ e.location or 'TBA' }}</p><div class="countdown" data-date="{{ e.event_date.isoformat() }}"></div></div></div></div>{% endfor %}</div><h3 class="text-gold mt-5">Matukio Yaliyopita</h3><div class="row">{% for e in past %}<div class="col-md-3 mb-3"><div class="card"><div class="card-body"><h6>{{ e.title }}</h6><small>{{ e.event_date.strftime('%d %b %Y') }}</small></div></div></div>{% endfor %}</div></div>
+<script>function updateCountdowns(){document.querySelectorAll('.countdown').forEach(el=>{let target=new Date(el.dataset.date),now=new Date(),diff=target-now;if(diff<=0)el.innerHTML="Event passed";else{let d=Math.floor(diff/864e5),h=Math.floor((diff%864e5)/36e5),m=Math.floor((diff%36e5)/6e4);el.innerHTML=`${d}d ${h}h ${m}m`}})}setInterval(updateCountdowns,6e4);updateCountdowns();</script>
+{% endblock %}
