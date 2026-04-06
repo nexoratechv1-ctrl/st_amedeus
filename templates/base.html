@@ -1,1 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St. Amedeus High School</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}"><i class="fas fa-school"></i> St. Amedeus</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('academics') }}">Academics</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('students_life') }}">Student Life</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('news_events') }}">News & Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('gallery') }}">Gallery</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admissions') }}">Admissions</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('contact') }}">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('results') }}"><i class="fas fa-chart-line"></i> Results</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('suggest') }}"><i class="fas fa-comment"></i> Suggestion</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('alumni') }}"><i class="fas fa-users"></i> Alumni</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('events') }}"><i class="fas fa-calendar-alt"></i> Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('quiz') }}"><i class="fas fa-question-circle"></i> Quiz</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('ai_assistant') }}"><i class="fas fa-robot"></i> AI Assistant</a></li>
+                </ul>
+                <div class="ms-lg-3 d-flex align-items-center">
+                    <button class="dark-mode-toggle me-2" id="darkModeToggle">🌓 Dark/Light</button>
+                    {% if current_user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-gold dropdown-toggle" data-bs-toggle="dropdown">
+                            <span class="user-avatar">{{ current_user.username[0]|upper }}</span> {{ current_user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            {% if current_user.is_admin %}
+                            <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-crown"></i> Admin Panel</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-gold">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
 
+    <a href="https://wa.me/255700000000?text=Hello%20St.%20Amedeus" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show fixed-top mt-5" style="top: 70px; z-index: 9999;">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4"><h5>St. Amedeus High School</h5><p>Brave, Skillful, Competence, Crown</p></div>
+                <div class="col-md-4"><h5>Quick Links</h5><ul class="list-unstyled"><li><a href="{{ url_for('admissions') }}">Apply Now</a></li><li><a href="{{ url_for('results') }}">View Results</a></li><li><a href="{{ url_for('contact') }}">Contact Us</a></li></ul></div>
+                <div class="col-md-4"><h5>Follow Us</h5><a href="#" class="me-2"><i class="fab fa-facebook fa-2x"></i></a><a href="#" class="me-2"><i class="fab fa-twitter fa-2x"></i></a><a href="#" class="me-2"><i class="fab fa-instagram fa-2x"></i></a></div>
+            </div>
+            <hr><div class="text-center"><p>&copy; 2025 St. Amedeus High School</p></div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const toggleBtn = document.getElementById('darkModeToggle');
+        if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+        toggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        });
+    </script>
+</body>
+                                                                                                                     </html>
