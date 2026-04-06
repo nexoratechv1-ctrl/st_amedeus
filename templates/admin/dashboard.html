@@ -1,18 +1,315 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="container mt-5 pt-5"><div class="section-title"><h2>Admin Dashboard</h2><p>Welcome, {{ current_user.username }}!</p></div>
-<ul class="nav nav-tabs mb-4">{% for tab in ['announcements','studentlife','gallery','messages','applications','users','results','suggestions','alumni','events','quiz'] %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ tab }}">{{ tab|capitalize }}</button></li>{% endfor %}</ul>
-<div class="tab-content">
-<div class="tab-pane fade show active" id="announcements"><div class="card mb-4"><div class="card-body"><h4>Add Announcement</h4><form method="POST" action="{{ url_for('add_announcement') }}"><input type="text" name="title" placeholder="Title" class="form-control mb-2" required><textarea name="content" placeholder="Content" class="form-control mb-2"></textarea><select name="category" class="form-select mb-2"><option>news</option><option>event</option><option>announcement</option></select><input type="date" name="event_date" class="form-control mb-2"><button class="btn btn-gold">Add</button></form></div></div><h4>Existing</h4>{% for a in announcements %}<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div><b>{{ a.title }}</b><br>{{ a.content[:50] }}</div><a href="{{ url_for('delete_announcement', id=a.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="studentlife"><div class="card mb-4"><div class="card-body"><h4>Add Media</h4><form method="POST" action="{{ url_for('add_media') }}"><input name="title" placeholder="Title" class="form-control mb-2"><textarea name="description" placeholder="Description" class="form-control mb-2"></textarea><select name="media_type" class="form-select mb-2"><option>image</option><option>video</option></select><input name="url" placeholder="URL" class="form-control mb-2"><input name="order" placeholder="Order" class="form-control mb-2"><button class="btn btn-gold">Add</button></form></div></div><h4>Media</h4>{% for m in media_items %}<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div>{{ m.title }}</div><a href="{{ url_for('delete_media', id=m.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="gallery"><div class="card mb-4"><div class="card-body"><h4>Add Gallery</h4><form method="POST" action="{{ url_for('add_gallery') }}"><input name="title" placeholder="Title" class="form-control mb-2"><textarea name="description" placeholder="Description" class="form-control mb-2"></textarea><select name="media_type" class="form-select mb-2"><option>image</option><option>video</option></select><input name="url" placeholder="URL" class="form-control mb-2"><button class="btn btn-gold">Add</button></form></div></div><h4>Gallery</h4>{% for i in gallery_items %}<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div>{{ i.title }}</div><a href="{{ url_for('delete_gallery', id=i.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="messages"><h4>Contact Messages</h4>{% for m in contact_messages %}<div class="card mb-2"><div class="card-body">{{ m.name }}: {{ m.message }}<br><a href="{{ url_for('delete_message', id=m.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="applications"><h4>Admission Apps</h4>{% for a in applications %}<div class="card mb-2"><div class="card-body">{{ a.full_name }} - {{ a.grade_applying }}<br><a href="{{ url_for('delete_application', id=a.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="users"><h4>Users</h4>{% for u in users %}<div class="card mb-2"><div class="card-body">{{ u.username }} ({{ u.phone }}) {% if u.is_admin %}<span class="badge bg-warning">Admin</span>{% endif %}</div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="results"><div class="card mb-4"><div class="card-body"><h4>Add Result</h4><form method="POST" action="{{ url_for('add_result') }}"><input name="index_number" placeholder="Index" class="form-control mb-2"><input name="student_name" placeholder="Name" class="form-control mb-2"><select name="exam_type" class="form-select mb-2"><option>Form Four</option><option>Form Six</option></select><input name="year" placeholder="Year" class="form-control mb-2"><input name="subjects" placeholder="Math:85,Eng:78" class="form-control mb-2"><input name="total_marks" placeholder="Total" class="form-control mb-2"><input name="division" placeholder="Division" class="form-control mb-2"><button class="btn btn-gold">Add</button></form></div></div><h4>Results</h4>{% for r in exam_results %}<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div>{{ r.student_name }} ({{ r.index_number }}) - {{ r.exam_type }} {{ r.year }}</div><a href="{{ url_for('delete_result', id=r.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="suggestions"><h4>Suggestions</h4>{% for s in suggestions %}<div class="card mb-2"><div class="card-body">{{ s.category }}: {{ s.content }}<br><a href="{{ url_for('delete_suggestion', id=s.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="alumni"><div class="card mb-4"><div class="card-body"><h4>Add Alumni</h4><form method="POST" action="{{ url_for('add_alumni') }}"><input name="name" placeholder="Name" class="form-control mb-2"><input name="graduation_year" placeholder="Year" class="form-control mb-2"><input name="occupation" placeholder="Occupation" class="form-control mb-2"><textarea name="story" placeholder="Story" class="form-control mb-2"></textarea><input name="image_url" placeholder="Image URL" class="form-control mb-2"><label><input type="checkbox" name="is_featured"> Featured</label><button class="btn btn-gold mt-2">Add</button></form></div></div><h4>Alumni</h4>{% for a in alumni_list %}<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div>{{ a.name }} ({{ a.graduation_year }})</div><a href="{{ url_for('delete_alumni', id=a.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="events"><div class="card mb-4"><div class="card-body"><h4>Add Event</h4><form method="POST" action="{{ url_for('add_event') }}"><input name="title" placeholder="Title" class="form-control mb-2"><textarea name="description" placeholder="Description" class="form-control mb-2"></textarea><input type="datetime-local" name="event_date" class="form-control mb-2"><input name="location" placeholder="Location" class="form-control mb-2"><button class="btn btn-gold">Add</button></form></div></div><h4>Events</h4>{% for e in events %}<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div>{{ e.title }} - {{ e.event_date.strftime('%d %b %Y') }}</div><a href="{{ url_for('delete_event', id=e.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-<div class="tab-pane fade" id="quiz"><div class="card mb-4"><div class="card-body"><h4>Add Quiz Question</h4><form method="POST" action="{{ url_for('add_quiz') }}"><textarea name="question" placeholder="Question" class="form-control mb-2"></textarea><input name="opt_a" placeholder="Option A" class="form-control mb-2"><input name="opt_b" placeholder="Option B" class="form-control mb-2"><input name="opt_c" placeholder="Option C" class="form-control mb-2"><input name="opt_d" placeholder="Option D" class="form-control mb-2"><select name="correct_answer" class="form-select mb-2"><option>A</option><option>B</option><option>C</option><option>D</option></select><input name="explanation" placeholder="Explanation" class="form-control mb-2"><button class="btn btn-gold">Add</button></form></div></div><h4>Questions</h4>{% for q in quiz_questions %}<div class="card mb-2"><div class="card-body d-flex justify-content-between"><div>{{ q.question[:50] }}</div><a href="{{ url_for('delete_quiz', id=q.id) }}" class="btn btn-sm btn-danger">Del</a></div></div>{% endfor %}</div>
-</div></div>
+<div class="container mt-5 pt-5">
+    <div class="section-title">
+        <h2><i class="fas fa-crown"></i> Admin Dashboard</h2>
+        <p>Welcome, {{ current_user.username }}!</p>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="adminTab" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#announcements">📢 Announcements</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#studentlife">🎨 Student Life Media</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#gallery">🖼️ Gallery</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#messages">💬 Messages</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#applications">📝 Applications</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#users">👥 Users</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#results">📊 Exam Results</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#suggestions">💡 Suggestions</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#alumni">🎓 Alumni</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#events">📅 Events</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#quiz">❓ Quiz</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- ==================== ANNOUNCEMENTS TAB ==================== -->
+        <div class="tab-pane fade show active" id="announcements">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add New Announcement</h4>
+                    <form method="POST" action="{{ url_for('add_announcement') }}">
+                        <div class="mb-3"><input type="text" name="title" placeholder="Title" class="form-control" required></div>
+                        <div class="mb-3"><textarea name="content" placeholder="Content" class="form-control" rows="3" required></textarea></div>
+                        <div class="mb-3">
+                            <select name="category" class="form-select">
+                                <option value="news">News</option>
+                                <option value="event">Event</option>
+                                <option value="announcement">Announcement</option>
+                            </select>
+                        </div>
+                        <div class="mb-3"><input type="date" name="event_date" class="form-control" placeholder="Event Date (optional)"></div>
+                        <button type="submit" class="btn btn-gold">Add Announcement</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Existing Announcements</h4>
+            {% for ann in announcements %}
+            <div class="card mb-2">
+                <div class="card-body d-flex justify-content-between">
+                    <div><strong>{{ ann.title }}</strong><br><small>{{ ann.content[:100] }}</small></div>
+                    <a href="{{ url_for('delete_announcement', id=ann.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== STUDENT LIFE MEDIA TAB (with file upload) ==================== -->
+        <div class="tab-pane fade" id="studentlife">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add Media (Upload from Phone)</h4>
+                    <form method="POST" action="{{ url_for('add_media') }}" enctype="multipart/form-data">
+                        <div class="mb-3"><input type="text" name="title" placeholder="Title" class="form-control" required></div>
+                        <div class="mb-3"><textarea name="description" placeholder="Description" class="form-control"></textarea></div>
+                        <div class="mb-3">
+                            <select name="media_type" class="form-select">
+                                <option value="image">Image</option>
+                                <option value="video">Video (MP4, MOV, AVI, WEBM)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-gold">Choose file from phone:</label>
+                            <input type="file" name="file" class="form-control" accept="image/*,video/*">
+                        </div>
+                        <div class="mb-3 text-muted"><small>OR provide external URL:</small></div>
+                        <div class="mb-3"><input type="url" name="url" placeholder="External URL (optional)" class="form-control"></div>
+                        <div class="mb-3"><input type="number" name="order" placeholder="Display Order" class="form-control"></div>
+                        <button type="submit" class="btn btn-gold">Add Media</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Current Media ({{ media_items|length }})</h4>
+            {% for m in media_items %}
+            <div class="card mb-2">
+                <div class="card-body d-flex justify-content-between">
+                    <div><strong>{{ m.title }}</strong><br><small>{{ m.media_type }} - {{ m.url[:50] }}</small></div>
+                    <a href="{{ url_for('delete_media', id=m.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== GALLERY TAB (with file upload) ==================== -->
+        <div class="tab-pane fade" id="gallery">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add Gallery Item (Upload from Phone)</h4>
+                    <form method="POST" action="{{ url_for('add_gallery') }}" enctype="multipart/form-data">
+                        <div class="mb-3"><input type="text" name="title" placeholder="Title" class="form-control" required></div>
+                        <div class="mb-3"><textarea name="description" placeholder="Description" class="form-control"></textarea></div>
+                        <div class="mb-3">
+                            <select name="media_type" class="form-select">
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-gold">Choose file from phone:</label>
+                            <input type="file" name="file" class="form-control" accept="image/*,video/*">
+                        </div>
+                        <div class="mb-3 text-muted"><small>OR provide external URL:</small></div>
+                        <div class="mb-3"><input type="url" name="url" placeholder="External URL (optional)" class="form-control"></div>
+                        <button type="submit" class="btn btn-gold">Add to Gallery</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Gallery Items</h4>
+            {% for item in gallery_items %}
+            <div class="card mb-2">
+                <div class="card-body d-flex justify-content-between">
+                    <div><strong>{{ item.title }}</strong><br><small>{{ item.media_type }}</small></div>
+                    <a href="{{ url_for('delete_gallery', id=item.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== MESSAGES TAB ==================== -->
+        <div class="tab-pane fade" id="messages">
+            <h4>Contact Messages</h4>
+            {% for msg in contact_messages %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    <strong>{{ msg.name }}</strong> ({{ msg.email }})<br>
+                    {{ msg.message }}<br>
+                    <small>{{ msg.created_at }}</small><br>
+                    <a href="{{ url_for('delete_message', id=msg.id) }}" class="btn btn-sm btn-danger mt-2" onclick="return confirm('Delete?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== APPLICATIONS TAB ==================== -->
+        <div class="tab-pane fade" id="applications">
+            <h4>Admission Applications</h4>
+            {% for app in applications %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    <strong>{{ app.full_name }}</strong> - {{ app.grade_applying }}<br>
+                    Parent: {{ app.parent_name }}, Phone: {{ app.phone }}<br>
+                    {{ app.message }}<br>
+                    <a href="{{ url_for('delete_application', id=app.id) }}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== USERS TAB ==================== -->
+        <div class="tab-pane fade" id="users">
+            <h4>Registered Users</h4>
+            {% for user in users %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    {{ user.username }} - {{ user.phone }}
+                    {% if user.is_admin %}<span class="badge bg-warning text-dark">Admin</span>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== EXAM RESULTS TAB ==================== -->
+        <div class="tab-pane fade" id="results">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add New Result</h4>
+                    <form method="POST" action="{{ url_for('add_result') }}">
+                        <div class="row">
+                            <div class="col-md-4"><input type="text" name="index_number" placeholder="Index (S1234/2024)" class="form-control mb-2" required></div>
+                            <div class="col-md-4"><input type="text" name="student_name" placeholder="Student Name" class="form-control mb-2" required></div>
+                            <div class="col-md-4">
+                                <select name="exam_type" class="form-select mb-2">
+                                    <option>Form Four</option>
+                                    <option>Form Six</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3"><input type="number" name="year" placeholder="Year" class="form-control mb-2"></div>
+                            <div class="col-md-5"><input type="text" name="subjects" placeholder="Subjects (Math:85,Eng:78)" class="form-control mb-2"></div>
+                            <div class="col-md-2"><input type="number" name="total_marks" placeholder="Total" class="form-control mb-2"></div>
+                            <div class="col-md-2"><input type="text" name="division" placeholder="Division (I,II,III)" class="form-control mb-2"></div>
+                        </div>
+                        <button type="submit" class="btn btn-gold">Add Result</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Existing Results</h4>
+            {% for r in exam_results %}
+            <div class="card mb-2">
+                <div class="card-body d-flex justify-content-between">
+                    <div><strong>{{ r.student_name }}</strong> ({{ r.index_number }}) - {{ r.exam_type }} {{ r.year }} - Div {{ r.division }}</div>
+                    <a href="{{ url_for('delete_result', id=r.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== SUGGESTIONS TAB ==================== -->
+        <div class="tab-pane fade" id="suggestions">
+            <h4>Anonymous Suggestions & Complaints</h4>
+            {% for s in suggestions %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    <strong>{{ s.category }}</strong> - {{ s.created_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                    {{ s.content }}<br>
+                    <a href="{{ url_for('delete_suggestion', id=s.id) }}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== ALUMNI TAB ==================== -->
+        <div class="tab-pane fade" id="alumni">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add Alumni</h4>
+                    <form method="POST" action="{{ url_for('add_alumni') }}">
+                        <div class="row">
+                            <div class="col-md-6"><input type="text" name="name" placeholder="Full Name" class="form-control mb-2" required></div>
+                            <div class="col-md-3"><input type="number" name="graduation_year" placeholder="Year" class="form-control mb-2"></div>
+                            <div class="col-md-6"><input type="text" name="occupation" placeholder="Current Occupation" class="form-control mb-2"></div>
+                            <div class="col-md-6"><input type="url" name="image_url" placeholder="Image URL (optional)" class="form-control mb-2"></div>
+                            <div class="col-md-12"><textarea name="story" placeholder="Success story..." rows="3" class="form-control mb-2"></textarea></div>
+                            <div class="col-md-12"><label><input type="checkbox" name="is_featured"> Feature this alumni</label></div>
+                        </div>
+                        <button type="submit" class="btn btn-gold">Add Alumni</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Existing Alumni</h4>
+            {% for a in alumni_list %}
+            <div class="card mb-2">
+                <div class="card-body d-flex justify-content-between">
+                    <div><strong>{{ a.name }}</strong> ({{ a.graduation_year }}) - {{ a.current_occupation }}</div>
+                    <a href="{{ url_for('delete_alumni', id=a.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== EVENTS TAB ==================== -->
+        <div class="tab-pane fade" id="events">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add Event</h4>
+                    <form method="POST" action="{{ url_for('add_event') }}">
+                        <div class="row">
+                            <div class="col-md-6"><input type="text" name="title" placeholder="Title" class="form-control mb-2" required></div>
+                            <div class="col-md-6"><input type="datetime-local" name="event_date" class="form-control mb-2" required></div>
+                            <div class="col-md-12"><textarea name="description" placeholder="Description" class="form-control mb-2"></textarea></div>
+                            <div class="col-md-6"><input type="text" name="location" placeholder="Location" class="form-control mb-2"></div>
+                        </div>
+                        <button type="submit" class="btn btn-gold">Add Event</button>
+                    </form>
+                </div>
+            </div>
+            <h4>All Events</h4>
+            {% for e in events %}
+            <div class="card mb-2">
+                <div class="card-body d-flex justify-content-between">
+                    <div><strong>{{ e.title }}</strong> - {{ e.event_date.strftime('%d %b %Y %H:%M') }}<br>{{ e.description }}</div>
+                    <a href="{{ url_for('delete_event', id=e.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ==================== QUIZ TAB ==================== -->
+        <div class="tab-pane fade" id="quiz">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Add Quiz Question</h4>
+                    <form method="POST" action="{{ url_for('add_quiz') }}">
+                        <div class="mb-2"><textarea name="question" placeholder="Question" class="form-control" required></textarea></div>
+                        <div class="row">
+                            <div class="col-md-6"><input type="text" name="opt_a" placeholder="Option A" class="form-control mb-2"></div>
+                            <div class="col-md-6"><input type="text" name="opt_b" placeholder="Option B" class="form-control mb-2"></div>
+                            <div class="col-md-6"><input type="text" name="opt_c" placeholder="Option C" class="form-control mb-2"></div>
+                            <div class="col-md-6"><input type="text" name="opt_d" placeholder="Option D" class="form-control mb-2"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select name="correct_answer" class="form-select">
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8"><input type="text" name="explanation" placeholder="Explanation" class="form-control"></div>
+                        </div>
+                        <button type="submit" class="btn btn-gold mt-2">Add Question</button>
+                    </form>
+                </div>
+            </div>
+            <h4>Existing Questions</h4>
+            {% for q in quiz_questions %}
+            <div class="card mb-2">
+                <div class="card-body d-flex justify-content-between">
+                    <div>{{ q.question }}<br><small>Correct: {{ q.correct_answer }}</small></div>
+                    <a href="{{ url_for('delete_quiz', id=q.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 {% endblock %}
