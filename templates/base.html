@@ -118,6 +118,46 @@
     <script>
         // Optional: Dark/Light mode toggle can be added later
         console.log("Super decorated mode active!");
-    </script>
+    </script><!-- Floating Share Buttons -->
+<div class="share-buttons">
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" class="share-btn fb"><i class="fab fa-facebook-f"></i></a>
+    <a href="https://twitter.com/intent/tweet?url={{ request.url }}&text=Check%20out%20St.%20Amedeus%20High%20School" target="_blank" class="share-btn tw"><i class="fab fa-twitter"></i></a>
+    <a href="https://wa.me/?text={{ request.url }}" target="_blank" class="share-btn wa"><i class="fab fa-whatsapp"></i></a>
+</div>
+
+<style>
+.share-buttons {
+    position: fixed;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.share-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    transition: 0.3s;
+    text-decoration: none;
+}
+.share-btn:hover {
+    transform: scale(1.1);
+}
+.fb { background: #3b5998; }
+.tw { background: #1da1f2; }
+.wa { background: #25d366; }
+@media (max-width: 768px) {
+    .share-buttons { left: 5px; }
+    .share-btn { width: 35px; height: 35px; font-size: 16px; }
+}
+</style>
 </body>
     </html>
