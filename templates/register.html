@@ -1,1 +1,4 @@
-
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 pt-5"><div class="row"><div class="col-md-6 mx-auto"><div class="card"><div class="card-body"><h3 class="text-center">Register</h3><form method="POST"><div class="mb-3"><input type="text" name="username" placeholder="Username" class="form-control" required></div><div class="mb-3"><input type="tel" name="phone" placeholder="Namba ya Simu" class="form-control" required></div><div class="mb-3"><input type="password" name="password" placeholder="Password" class="form-control" required></div><div class="mb-3"><input type="password" name="confirm_password" placeholder="Confirm Password" class="form-control" required></div><button type="submit" class="btn btn-gold w-100">Register</button></form><hr><p class="text-center">Tayari una akaunti? <a href="{{ url_for('login') }}" class="text-gold">Login</a></p></div></div></div></div></div>
+{% endblock %}
