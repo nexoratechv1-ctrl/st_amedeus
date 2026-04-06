@@ -492,3 +492,108 @@ def delete_result(id):
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_suggestion/<int:id>')
+@admin_required
+def delete_suggestion(id):
+    s = Suggestion.query.get_or_404(id)
+    db.session.delete(s)
+    db.session.commit()
+    flash('Suggestion deleted', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_alumni', methods=['POST'])
+@login_required
+@admin_required
+def add_alumni():
+    name = request.form.get('name')
+    year = request.form.get('graduation_year')
+    occupation = request.form.get('occupation')
+    story = request.form.get('story')
+    image = request.form.get('image_url')
+    featured = request.form.get('is_featured') == 'on'
+    alumni = Alumni(name=name, graduation_year=year, current_occupation=occupation, story=story, image_url=image, is_featured=featured)
+    db.session.add(alumni)
+    db.session.commit()
+    flash('Alumni added!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_alumni/<int:id>')
+@login_required
+@admin_required
+def delete_alumni(id):
+    a = Alumni.query.get_or_404(id)
+    db.session.delete(a)
+    db.session.commit()
+    flash('Deleted', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_event', methods=['POST'])
+@login_required
+@admin_required
+def add_event():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    event_date_str = request.form.get('event_date')
+    location = request.form.get('location')
+    event_date = datetime.strptime(event_date_str, '%Y-%m-%dT%H:%M')
+    event = Event(title=title, description=description, event_date=event_date, location=location)
+    db.session.add(event)
+    db.session.commit()
+    flash('Event added!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_event/<int:id>')
+@login_required
+@admin_required
+def delete_event(id):
+    e = Event.query.get_or_404(id)
+    db.session.delete(e)
+    db.session.commit()
+    flash('Event deleted', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_quiz', methods=['POST'])
+@login_required
+@admin_required
+def add_quiz():
+    q = request.form.get('question')
+    a = request.form.get('opt_a')
+    b = request.form.get('opt_b')
+    c = request.form.get('opt_c')
+    d = request.form.get('opt_d')
+    correct = request.form.get('correct_answer')
+    explanation = request.form.get('explanation')
+    quiz = QuizQuestion(question=q, option_a=a, option_b=b, option_c=c, option_d=d, correct_answer=correct, explanation=explanation)
+    db.session.add(quiz)
+    db.session.commit()
+    flash('Quiz question added!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_quiz/<int:id>')
+@login_required
+@admin_required
+def delete_quiz(id):
+    q = QuizQuestion.query.get_or_404(id)
+    db.session.delete(q)
+    db.session.commit()
+    flash('Quiz question deleted', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+# ------------------- INIT -------------------
+def init_admin():
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(username='admin', phone='+255700000000', is_admin=True)
+        admin.set_password('admin123')
+        db.session.add(admin)
+        db.session.commit()
+        print("Admin user created: username 'admin', password 'admin123'")
+
+with app.app_context():
+    db.create_all()
+    init_admin()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+```
+
+---
