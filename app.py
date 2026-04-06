@@ -351,7 +351,7 @@ def admin_dashboard():
     alumni_list = Alumni.query.all()
     events = Event.query.order_by(Event.event_date.desc()).all()
     quiz_questions = QuizQuestion.query.all()
-    
+    now = datetime.utcnow()
     return render_template('admin/dashboard.html', 
                          announcements=announcements,
                          media_items=media_items,
@@ -363,7 +363,7 @@ def admin_dashboard():
                          suggestions=suggestions,
                          alumni_list=alumni_list,
                          events=events,
-                         quiz_questions=quiz_questions)
+                         quiz_questions=quiz_questions now=now)
 
 # ------------------- ADMIN CRUD FOR EXISTING FEATURES -------------------
 @app.route('/admin/add_announcement', methods=['POST'])
