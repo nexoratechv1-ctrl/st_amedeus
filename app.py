@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import wraps
 
 app = Flask(__name__)
@@ -14,7 +14,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# ------------------- MODELS (EXISTING) -------------------
+# ------------------- MODELS -------------------
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -72,7 +72,6 @@ class AdmissionApplication(db.Model):
     message = db.Column(db.Text, nullable=True)
     applied_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# ------------------- NEW MODELS -------------------
 class ExamResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     index_number = db.Column(db.String(50), nullable=False, index=True)
@@ -134,12 +133,11 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ------------------- CONTEXT PROCESSOR -------------------
 @app.context_processor
 def inject_user():
     return dict(current_user=current_user)
 
-# ------------------- EXISTING ROUTES (PUBLIC) -------------------
+# ------------------- PUBLIC ROUTES -------------------
 @app.route('/')
 def home():
     latest_announcements = Announcement.query.order_by(Announcement.created_at.desc()).limit(3).all()
@@ -195,7 +193,7 @@ def contact():
             email=request.form.get('email'),
             phone=request.form.get('phone'),
             message=request.form.get('message')
-        
+        )
         db.session.add(message)
         db.session.commit()
         flash('Your message has been sent. We will get back to you shortly!', 'success')
@@ -308,13 +306,12 @@ def alumni():
 
 @app.route('/events')
 def events():
-    upcoming_events = Event.query.filter(Event.event_date >= datetime.utcnow()).order_by(Event.event_date.asc()).all()
-    past_events = Event.query.filter(Event.event_date < datetime.utcnow()).order_by(Event.event_date.desc()).limit(5).all()
-    return render_template('events.html', upcoming=upcoming_events, past=past_events)
+    upcoming = Event.query.filter(Event.event_date >= datetime.utcnow()).order_by(Event.event_date.asc()).all()
+    past = Event.query.filter(Event.event_date < datetime.utcnow()).order_by(Event.event_date.desc()).limit(5).all()
+    return render_template('events.html', upcoming=upcoming, past=past)
 
 @app.route('/quiz', methods=['GET', 'POST'])
 def quiz():
-    score = None
     feedback = None
     question = None
     if request.method == 'POST':
@@ -323,17 +320,15 @@ def quiz():
         if question:
             user_answer = request.form.get('answer')
             if user_answer and user_answer.upper() == question.correct_answer:
-                score = 1
                 feedback = f"✅ Sahihi! {question.explanation}"
             else:
-                score = 0
                 correct_letter = question.correct_answer
                 correct_text = getattr(question, f'option_{correct_letter.lower()}')
                 feedback = f"❌ Sio sahihi. Jibu sahihi ni {correct_letter}: {correct_text}. {question.explanation}"
         else:
             feedback = "Swali halikupatikana."
     question = QuizQuestion.query.order_by(db.func.random()).first()
-    return render_template('quiz.html', question=question, score=score, feedback=feedback)
+    return render_template('quiz.html', question=question, feedback=feedback)
 
 # ------------------- ADMIN DASHBOARD -------------------
 @app.route('/admin/dashboard')
@@ -364,7 +359,7 @@ def admin_dashboard():
                          events=events,
                          quiz_questions=quiz_questions)
 
-# ------------------- ADMIN CRUD FOR EXISTING FEATURES -------------------
+# ------------------- ADMIN CRUD (Existing) -------------------
 @app.route('/admin/add_announcement', methods=['POST'])
 @login_required
 @admin_required
@@ -460,7 +455,7 @@ def delete_application(id):
     flash('Application deleted!', 'success')
     return redirect(url_for('admin_dashboard'))
 
-# ------------------- ADMIN CRUD FOR NEW FEATURES -------------------
+# ------------------- ADMIN CRUD (New Features) -------------------
 @app.route('/admin/add_result', methods=['POST'])
 @login_required
 @admin_required
@@ -497,109 +492,3 @@ def delete_result(id):
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_suggestion/<int:id>')
-@login_required
-@admin_required
-def delete_suggestion(id):
-    s = Suggestion.query.get_or_404(id)
-    db.session.delete(s)
-    db.session.commit()
-    flash('Suggestion deleted', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_alumni', methods=['POST'])
-@login_required
-@admin_required
-def add_alumni():
-    name = request.form.get('name')
-    year = request.form.get('graduation_year')
-    occupation = request.form.get('occupation')
-    story = request.form.get('story')
-    image = request.form.get('image_url')
-    featured = request.form.get('is_featured') == 'on'
-    alumni = Alumni(name=name, graduation_year=year, current_occupation=occupation, story=story, image_url=image, is_featured=featured)
-    db.session.add(alumni)
-    db.session.commit()
-    flash('Alumni added!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_alumni/<int:id>')
-@login_required
-@admin_required
-def delete_alumni(id):
-    a = Alumni.query.get_or_404(id)
-    db.session.delete(a)
-    db.session.commit()
-    flash('Deleted', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_event', methods=['POST'])
-@login_required
-@admin_required
-def add_event():
-    title = request.form.get('title')
-    description = request.form.get('description')
-    event_date_str = request.form.get('event_date')
-    location = request.form.get('location')
-    event_date = datetime.strptime(event_date_str, '%Y-%m-%dT%H:%M')
-    event = Event(title=title, description=description, event_date=event_date, location=location)
-    db.session.add(event)
-    db.session.commit()
-    flash('Event added!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_event/<int:id>')
-@login_required
-@admin_required
-def delete_event(id):
-    e = Event.query.get_or_404(id)
-    db.session.delete(e)
-    db.session.commit()
-    flash('Event deleted', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/add_quiz', methods=['POST'])
-@login_required
-@admin_required
-def add_quiz():
-    q = request.form.get('question')
-    a = request.form.get('opt_a')
-    b = request.form.get('opt_b')
-    c = request.form.get('opt_c')
-    d = request.form.get('opt_d')
-    correct = request.form.get('correct_answer')
-    explanation = request.form.get('explanation')
-    quiz = QuizQuestion(question=q, option_a=a, option_b=b, option_c=c, option_d=d, correct_answer=correct, explanation=explanation)
-    db.session.add(quiz)
-    db.session.commit()
-    flash('Quiz question added!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_quiz/<int:id>')
-@login_required
-@admin_required
-def delete_quiz(id):
-    q = QuizQuestion.query.get_or_404(id)
-    db.session.delete(q)
-    db.session.commit()
-    flash('Quiz question deleted', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-# ------------------- INIT ADMIN AND TABLES -------------------
-def init_admin():
-    admin = User.query.filter_by(username='admin').first()
-    if not admin:
-        admin = User(username='admin', phone='+255700000000', is_admin=True)
-        admin.set_password('admin123')
-        db.session.add(admin)
-        db.session.commit()
-        print("Admin user created: username 'admin', password 'admin123'")
-
-with app.app_context():
-    db.create_all()
-    init_admin()
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-```
-
----
