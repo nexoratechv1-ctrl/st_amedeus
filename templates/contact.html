@@ -1,1 +1,9 @@
-
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="section-title"><h2>Wasiliana Nasi</h2></div>
+    <div class="row"><div class="col-lg-6"><div class="card"><div class="card-body"><p><i class="fas fa-map-marker-alt"></i> P.O. Box 123, Dar es Salaam</p><p><i class="fas fa-phone"></i> +255 222 123 456</p><p><i class="fas fa-envelope"></i> info@stamedeus.ac.tz</p><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.5019181816856!2d39.267785!3d-6.816111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x185c4b1e3b2c3d6b%3A0x2c8b3f7a8e5d6c9a!2sDar%20es%20Salaam%2C%20Tanzania!5e0!3m2!1sen!2s!4v1690000000000!5m2!1sen!2s" width="100%" height="200" allowfullscreen></iframe></div></div></div>
+        <div class="col-lg-6"><div class="card"><div class="card-body"><h4>Tutumie Ujumbe</h4><form method="POST"><div class="mb-3"><input type="text" name="name" placeholder="Jina" class="form-control" required></div><div class="mb-3"><input type="email" name="email" placeholder="Barua Pepe" class="form-control" required></div><div class="mb-3"><input type="tel" name="phone" placeholder="Simu" class="form-control"></div><div class="mb-3"><textarea name="message" rows="5" class="form-control" required></textarea></div><button type="submit" class="btn btn-gold w-100">Tuma</button></form></div></div></div>
+    </div>
+</div>
+{% endblock %}
