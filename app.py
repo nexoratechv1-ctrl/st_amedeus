@@ -363,7 +363,7 @@ def admin_dashboard():
                          suggestions=suggestions,
                          alumni_list=alumni_list,
                          events=events,
-                         quiz_questions=quiz_questions now=now)
+                         quiz_questions=quiz_questions,now=now)
 
 # ------------------- ADMIN CRUD FOR EXISTING FEATURES -------------------
 @app.route('/admin/add_announcement', methods=['POST'])
