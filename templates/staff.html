@@ -1,0 +1,302 @@
+<!-- templates/staff.html - Excel-like results entry -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Panel - Results Entry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f5f5f5; }
+        .navbar { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1rem 2rem; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 20px; }
+        .card { background: white; border-radius: 15px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-right: 10px; }
+        .excel-table { overflow-x: auto; margin-top: 2rem; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #667eea; color: white; font-weight: 600; position: sticky; top: 0; }
+        td input { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn-group { margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+        .success { background: #27ae60; }
+        .warning { background: #e67e22; }
+        .school-header { text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #667eea; }
+        .school-header h1 { color: #667eea; font-size: 1.8rem; }
+        .school-header p { color: #666; }
+        @media (max-width: 768px) { th, td { font-size: 12px; padding: 5px; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h2>📊 Staff Results Management System</h2>
+    </nav>
+    
+    <div class="container">
+        <div class="school-header">
+            <h1>CATHOLIC DIOCESE OF MOSHI</h1>
+            <h2>ST. AMEDEUS SECONDARY SCHOOL</h2>
+            <p>P.O. Box 1916, Moshi - Tanzania | Tel: 0748208331</p>
+        </div>
+        
+        <div class="card" id="loginSection">
+            <h3>Staff Login</h3>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Username">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password">
+            </div>
+            <button onclick="login()">Login</button>
+        </div>
+        
+        <div id="staffPanel" style="display: none;">
+            <div class="card">
+                <h3>📝 Select Exam Parameters</h3>
+                <div class="form-group">
+                    <label>Select Class/Form</label>
+                    <select id="classLevel" onchange="loadStudents()">
+                        <option value="">-- Select Class --</option>
+                        <option value="Form I">Form I</option>
+                        <option value="Form II">Form II</option>
+                        <option value="Form III">Form III</option>
+                        <option value="Form IV">Form IV</option>
+                        <option value="Form V">Form V</option>
+                        <option value="Form VI">Form VI</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Select Exam Type</label>
+                    <select id="examType" onchange="loadExamTypes()">
+                        <option value="">-- Select Exam --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Select Subject</label>
+                    <select id="subjectName" onchange="loadResultsSheet()">
+                        <option value="">-- Select Subject --</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="English">English</option>
+                        <option value="Kiswahili">Kiswahili</option>
+                        <option value="Biology">Biology</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Physics">Physics</option>
+                        <option value="History">History</option>
+                        <option value="Geography">Geography</option>
+                        <option value="Civics">Civics</option>
+                        <option value="Bible Knowledge">Bible Knowledge</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Term</label>
+                    <select id="term">
+                        <option value="Term I">Term I</option>
+                        <option value="Term II">Term II</option>
+                        <option value="Term III">Term III</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="number" id="year" value="2024">
+                </div>
+            </div>
+            
+            <div class="card" id="excelSheet" style="display: none;">
+                <h3>📊 Excel-like Results Entry Sheet</h3>
+                <p style="margin-bottom: 1rem; color: #666;">Click on any cell to edit marks. Changes are auto-saved.</p>
+                <div class="excel-table" id="excelTableContainer"></div>
+                <div class="btn-group">
+                    <button onclick="saveAllResults()"><i class="fas fa-save"></i> Save All Results</button>
+                    <button onclick="exportToExcel()" class="warning"><i class="fas fa-file-excel"></i> Export to Excel</button>
+                    <button onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Export to PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let token = '';
+        let currentResults = [];
+        let currentStudents = [];
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const res = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            
+            const data = await res.json();
+            if (res.ok) {
+                token = data.token;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('staffPanel').style.display = 'block';
+                loadExamTypes();
+            } else {
+                alert('Invalid credentials');
+            }
+        }
+        
+        async function loadExamTypes() {
+            const res = await fetch('/api/exam-types');
+            const exams = await res.json();
+            const select = document.getElementById('examType');
+            select.innerHTML = '<option value="">-- Select Exam --</option>';
+            exams.forEach(exam => {
+                select.innerHTML += `<option value="${exam.exam_name}">${exam.exam_name}</option>`;
+            });
+        }
+        
+        async function loadStudents() {
+            const classLevel = document.getElementById('classLevel').value;
+            if (!classLevel) return;
+            
+            const res = await fetch('/api/students', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const students = await res.json();
+            currentStudents = students.filter(s => s.class_level === classLevel);
+        }
+        
+        async function loadResultsSheet() {
+            const classLevel = document.getElementById('classLevel').value;
+            const examType = document.getElementById('examType').value;
+            const subjectName = document.getElementById('subjectName').value;
+            const term = document.getElementById('term').value;
+            const year = document.getElementById('year').value;
+            
+            if (!classLevel || !examType || !subjectName) {
+                alert('Please select Class, Exam Type, and Subject');
+                return;
+            }
+            
+            const res = await fetch(`/api/results/sheet?exam_name=${examType}&class_level=${classLevel}&term=${term}&year=${year}&subject_name=${subjectName}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            const data = await res.json();
+            currentResults = data.results;
+            
+            const container = document.getElementById('excelTableContainer');
+            container.innerHTML = `
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>Index Number</th>
+                            <th>Student Full Name</th>
+                            <th>Marks (0-100)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.results.map((r, idx) => `
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td>${r.index_number}</td>
+                                <td>${r.full_name}</td>
+                                <td><input type="number" class="marks-input" data-id="${r.student_id}" value="${r.marks || ''}" min="0" max="100" step="0.5" onchange="updateMark(${r.student_id}, this.value)"></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('excelSheet').style.display = 'block';
+        }
+        
+        function updateMark(studentId, marks) {
+            const studentResult = currentResults.find(r => r.student_id === studentId);
+            if (studentResult) {
+                studentResult.marks = parseFloat(marks) || 0;
+            }
+        }
+        
+        async function saveAllResults() {
+            const classLevel = document.getElementById('classLevel').value;
+            const examType = document.getElementById('examType').value;
+            const subjectName = document.getElementById('subjectName').value;
+            const term = document.getElementById('term').value;
+            const year = document.getElementById('year').value;
+            
+            const resultsToSave = currentResults.map(r => ({
+                student_id: r.student_id,
+                marks: r.marks || 0
+            }));
+            
+            const res = await fetch('/api/results/bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    exam_name: examType,
+                    class_level: classLevel,
+                    term: term,
+                    year: parseInt(year),
+                    subject_name: subjectName,
+                    results: resultsToSave
+                })
+            });
+            
+            if (res.ok) {
+                alert('Results saved successfully!');
+            } else {
+                alert('Error saving results');
+            }
+        }
+        
+        function exportToExcel() {
+            const table = document.getElementById('resultsTable');
+            const ws = XLSX.utils.table_to_sheet(table);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Results');
+            XLSX.writeFile(wb, `results_${new Date().toISOString().slice(0,19)}.xlsx`);
+        }
+        
+        function exportToPDF() {
+            const printWindow = window.open('', '_blank');
+            const classLevel = document.getElementById('classLevel').value;
+            const examType = document.getElementById('examType').value;
+            const subjectName = document.getElementById('subjectName').value;
+            const term = document.getElementById('term').value;
+            const year = document.getElementById('year').value;
+            
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Results - ${examType} ${subjectName} ${classLevel}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 40px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .header h1 { color: #667eea; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background: #667eea; color: white; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>CATHOLIC DIOCESE OF MOSHI</h1>
+                        <h2>ST. AMEDEUS SECONDARY SCHOOL</h2>
+                        <p>P.O. Box 1916, Moshi - Tanzania</p>
+                        <h3>${examType} Results - ${subjectName} - ${classLevel} - ${term} ${year}</h3>
+                    </div>
+                    ${document.getElementById('excelTableContainer').innerHTML}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+    </html>
