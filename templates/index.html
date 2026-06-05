@@ -1,1 +1,328 @@
-
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St. Amedeus Secondary School - Results System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .notification-bar { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 12px 20px; text-align: center; cursor: pointer; position: relative; overflow: hidden; }
+        .notification-bar::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 2s infinite; }
+        @keyframes shimmer { 100% { left: 100%; } }
+        .notification-bar i { margin-right: 10px; animation: bell 1s ease infinite; }
+        @keyframes bell { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(15deg); } 75% { transform: rotate(-15deg); } }
+        .navbar { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); box-shadow: 0 2px 20px rgba(0,0,0,0.1); padding: 1rem 2rem; position: sticky; top: 0; z-index: 1000; }
+        .nav-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .logo h2 { color: #667eea; font-size: 1.5rem; }
+        .logo p { font-size: 0.75rem; color: #666; }
+        .nav-links { display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; }
+        .nav-links a { text-decoration: none; color: #333; font-weight: 500; transition: 0.3s; }
+        .nav-links a:hover { color: #667eea; }
+        .btn { padding: 10px 24px; border-radius: 25px; border: none; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .container { max-width: 1200px; margin: 3rem auto; padding: 0 20px; }
+        .hero { text-align: center; padding: 2rem; background: rgba(255,255,255,0.95); border-radius: 30px; margin-bottom: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .hero h1 { font-size: 2rem; color: #333; margin: 0.5rem 0; }
+        .hero .school-name { color: #667eea; font-size: 1.2rem; }
+        .search-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .search-box { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .search-box input { flex: 1; padding: 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; transition: 0.3s; }
+        .search-box input:focus { outline: none; border-color: #667eea; }
+        .results-container { display: none; margin-top: 2rem; }
+        .student-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem; }
+        .exam-card { background: #f8f9fa; border-radius: 15px; padding: 1.5rem; margin-bottom: 1rem; transition: 0.3s; }
+        .exam-card.new { border-left: 5px solid #f5576c; background: linear-gradient(135deg, #fff5f5, #fff); animation: highlight 1s ease; }
+        @keyframes highlight { 0%, 100% { background: #fff5f5; } 50% { background: #ffe0e0; } }
+        .exam-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .badge-new { background: #f5576c; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .subject-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .subject-item { background: white; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; }
+        .subject-item.pass { color: #27ae60; font-weight: 700; }
+        .subject-item.fail { color: #e74c3c; font-weight: 700; }
+        .stats { display: flex; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd; flex-wrap: wrap; }
+        .stat { background: white; padding: 10px 15px; border-radius: 10px; flex: 1; text-align: center; min-width: 80px; }
+        .ai-comment { background: linear-gradient(135deg, #667eea20, #764ba220); padding: 1.5rem; border-radius: 15px; margin: 1rem 0; border-left: 4px solid #667eea; white-space: pre-line; }
+        .admin-links { background: #f0f0f0; padding: 10px 20px; border-radius: 10px; margin-top: 10px; display: flex; gap: 20px; justify-content: center; }
+        .admin-links a { color: #667eea; text-decoration: none; font-weight: 600; }
+        .inbox-btn { position: fixed; bottom: 20px; right: 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 20px rgba(0,0,0,0.2); transition: 0.3s; z-index: 100; }
+        .inbox-btn:hover { transform: scale(1.1); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; border-radius: 20px; padding: 2rem; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        @media (max-width: 768px) { .nav-links { display: flex; gap: 1rem; margin-top: 10px; } .hero h1 { font-size: 1.2rem; } .search-box { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <!-- Notification Bar -->
+    <div class="notification-bar" id="notificationBar" onclick="openAnnouncements()">
+        <i class="fas fa-bell"></i>
+        <span id="latestAnnouncement">Loading announcements...</span>
+    </div>
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <h2>📊 St. Amedeus SS</h2>
+                <p>Catholic Diocese of Moshi</p>
+            </div>
+            <div class="nav-links">
+                <a href="/">🏠 Home</a>
+                <a href="#" onclick="openInbox()">📬 Inbox</a>
+                <a href="/admin" style="background: #667eea; color: white; padding: 8px 16px; border-radius: 20px;">👑 Admin Panel</a>
+                <a href="/staff" style="background: #764ba2; color: white; padding: 8px 16px; border-radius: 20px;">👨‍🏫 Staff Panel</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="hero">
+            <div class="school-name">CATHOLIC DIOCESE OF MOSHI</div>
+            <h1>ST. AMEDEUS SECONDARY SCHOOL</h1>
+            <p>P.O. Box 1916, Moshi - Tanzania</p>
+            <p style="margin-top: 0.5rem;">📞 0748208331 | 0763888158 | 0757721085</p>
+        </div>
+        
+        <div class="search-card">
+            <h3 style="margin-bottom: 1rem;">🔍 Check Your Results</h3>
+            <div class="search-box">
+                <input type="text" id="indexNumber" placeholder="Enter Index Number (e.g., 2024-001)" autocomplete="off">
+                <button class="btn btn-primary" onclick="searchResults()">View Results</button>
+            </div>
+            
+            <div class="results-container" id="resultsContainer"></div>
+        </div>
+    </div>
+    
+    <!-- Inbox Modal -->
+    <div class="modal" id="inboxModal">
+        <div class="modal-content">
+            <h3>📬 Messages & Replies</h3>
+            <div style="max-height: 400px; overflow-y: auto;" id="inboxMessages"></div>
+            <textarea id="newMessage" placeholder="Type your message/question here..." rows="3" style="width: 100%; margin: 1rem 0; padding: 10px; border: 1px solid #ddd; border-radius: 10px;"></textarea>
+            <input type="text" id="senderName" placeholder="Your Name" style="width: 100%; margin-bottom: 1rem; padding: 10px; border: 1px solid #ddd; border-radius: 10px;">
+            <input type="text" id="msgIndexNumber" placeholder="Student Index Number" style="width: 100%; margin-bottom: 1rem; padding: 10px; border: 1px solid #ddd; border-radius: 10px;">
+            <button class="btn btn-primary" onclick="sendMessage()">Send Message</button>
+            <button class="btn" onclick="closeModal()" style="margin-top: 1rem;">Close</button>
+        </div>
+    </div>
+    
+    <!-- Announcements Modal -->
+    <div class="modal" id="announcementsModal">
+        <div class="modal-content">
+            <h3>📢 School Announcements</h3>
+            <div id="announcementsList"></div>
+            <button class="btn" onclick="closeAnnouncements()">Close</button>
+        </div>
+    </div>
+    
+    <!-- Inbox Button -->
+    <div class="inbox-btn" onclick="openInbox()">
+        <i class="fas fa-envelope" style="font-size: 24px;"></i>
+    </div>
+    
+    <script>
+        let currentStudentIndex = '';
+        
+        async function loadAnnouncements() {
+            try {
+                const res = await fetch('/api/announcements');
+                const anns = await res.json();
+                if (anns.length > 0) {
+                    document.getElementById('latestAnnouncement').innerHTML = `<i class="fas fa-bell"></i> 📢 ${anns[0].title} - ${anns[0].content.substring(0, 50)}...`;
+                } else {
+                    document.getElementById('latestAnnouncement').innerHTML = 'No new announcements';
+                }
+            } catch(e) { console.log(e); }
+        }
+        
+        async function searchResults() {
+            const indexNumber = document.getElementById('indexNumber').value.trim();
+            if (!indexNumber) {
+                alert('Please enter index number');
+                return;
+            }
+            
+            currentStudentIndex = indexNumber;
+            
+            const res = await fetch(`/api/student/results/${indexNumber}`);
+            const data = await res.json();
+            
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            
+            const container = document.getElementById('resultsContainer');
+            container.style.display = 'block';
+            
+            let examsHtml = '';
+            if (data.exams && data.exams.length > 0) {
+                for (let exam of data.exams) {
+                    const isNew = exam.is_new === 1;
+                    examsHtml += `
+                        <div class="exam-card ${isNew ? 'new' : ''}">
+                            <div class="exam-title">
+                                <span>📝 ${exam.exam_name} - ${exam.term} ${exam.year}</span>
+                                ${isNew ? '<span class="badge-new">NEW</span>' : ''}
+                            </div>
+                            <div class="subject-grid">
+                                ${exam.subjects.map(s => `
+                                    <div class="subject-item ${s.marks >= 50 ? 'pass' : 'fail'}">
+                                        <span>${s.name}</span>
+                                        <span><strong>${s.marks || '-'}%</strong></span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="stats">
+                                <div class="stat">Total: ${exam.total_marks || 0}</div>
+                                <div class="stat">Average: ${exam.average ? exam.average.toFixed(1) : 0}%</div>
+                                <div class="stat">Grade: ${exam.grade || '-'}</div>
+                                <div class="stat">Division: ${exam.division || '-'}</div>
+                                <div class="stat">Position: ${exam.position || '-'}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                let graphHtml = '';
+                if (data.exams.length >= 2) {
+                    const labels = data.exams.map(e => `${e.exam_name} ${e.term}`);
+                    const averages = data.exams.map(e => e.average || 0);
+                    graphHtml = `
+                        <div style="margin: 2rem 0;">
+                            <h4>📈 Performance Trend Comparison</h4>
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                        <script>
+                            setTimeout(() => {
+                                const ctx = document.getElementById('trendChart').getContext('2d');
+                                new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: ${JSON.stringify(labels)},
+                                        datasets: [{
+                                            label: 'Average Score (%)',
+                                            data: ${JSON.stringify(averages)},
+                                            borderColor: '#667eea',
+                                            backgroundColor: 'rgba(102,126,234,0.1)',
+                                            tension: 0.4,
+                                            fill: true
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        plugins: { legend: { position: 'top' } }
+                                    }
+                                });
+                            }, 100);
+                        <\/script>
+                    `;
+                }
+                
+                container.innerHTML = `
+                    <div class="student-header">
+                        <h3>👨‍🎓 ${data.student.full_name}</h3>
+                        <p>Index: ${data.student.index_number} | Class: ${data.student.class_level}</p>
+                    </div>
+                    ${examsHtml}
+                    ${graphHtml}
+                    <div class="ai-comment">
+                        <h4>🤖 AI Academic Analysis & Advice</h4>
+                        <div style="white-space: pre-line;">${data.ai_comment}</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `<div class="student-header"><p>No results found for this student.</p></div>`;
+            }
+        }
+        
+        function openInbox() {
+            document.getElementById('inboxModal').style.display = 'flex';
+            loadInboxMessages();
+        }
+        
+        async function loadInboxMessages() {
+            const studentIndex = document.getElementById('msgIndexNumber').value;
+            if (!studentIndex) {
+                document.getElementById('inboxMessages').innerHTML = '<p>Enter your student index number above to see messages.</p>';
+                return;
+            }
+            const res = await fetch(`/api/messages?student_index=${studentIndex}`);
+            const msgs = await res.json();
+            if (msgs.length === 0) {
+                document.getElementById('inboxMessages').innerHTML = '<p>No messages yet. Send a message above.</p>';
+            } else {
+                document.getElementById('inboxMessages').innerHTML = msgs.map(m => `
+                    <div style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-radius: 10px;">
+                        <p><strong>You:</strong> ${m.message}</p>
+                        ${m.reply ? `<p><strong>Admin Reply:</strong> ${m.reply}</p><small>${new Date(m.date).toLocaleDateString()}</small>` : '<p><em>Waiting for admin reply...</em></p>'}
+                    </div>
+                `).join('');
+            }
+        }
+        
+        async function sendMessage() {
+            const message = document.getElementById('newMessage').value;
+            const senderName = document.getElementById('senderName').value;
+            const studentIndex = document.getElementById('msgIndexNumber').value;
+            if (!message || !senderName || !studentIndex) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            const res = await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_index: studentIndex,
+                    sender_name: senderName,
+                    message: message
+                })
+            });
+            
+            if (res.ok) {
+                alert('Message sent successfully!');
+                document.getElementById('newMessage').value = '';
+                document.getElementById('senderName').value = '';
+                loadInboxMessages();
+            } else {
+                alert('Error sending message');
+            }
+        }
+        
+        function openAnnouncements() {
+            document.getElementById('announcementsModal').style.display = 'flex';
+            loadAllAnnouncements();
+        }
+        
+        async function loadAllAnnouncements() {
+            const res = await fetch('/api/announcements');
+            const anns = await res.json();
+            document.getElementById('announcementsList').innerHTML = anns.map(a => `
+                <div style="background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-radius: 10px;">
+                    <h4>${a.title}</h4>
+                    <p>${a.content}</p>
+                    <small>${new Date(a.date).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+        }
+        
+        function closeModal() { document.getElementById('inboxModal').style.display = 'none'; }
+        function closeAnnouncements() { document.getElementById('announcementsModal').style.display = 'none'; }
+        
+        document.getElementById('indexNumber').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchResults();
+        });
+        
+        loadAnnouncements();
+        setInterval(loadAnnouncements, 30000);
+    </script>
+</body>
+      </html>
