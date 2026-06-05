@@ -514,4 +514,15 @@ def uploaded_file(filename):
     return send_from_directory('static/uploads', filename)
 
 @app.route('/api/subjects', methods=['GET'])
-de
+def get_subjects():
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT form, subject_name FROM subjects")
+    subjects = c.fetchall()
+    conn.close()
+    return jsonify([{'form': s[0], 'subject_name': s[1]} for s in subjects])
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
+```
