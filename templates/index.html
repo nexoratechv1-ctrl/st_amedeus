@@ -1,1 +1,236 @@
-
+<!-- templates/admin.html - Admin Panel -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        .navbar { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
+        .card { background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 10px 20px; background: #e9ecef; border: none; border-radius: 8px; cursor: pointer; }
+        .tab.active { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #1e3c72; color: white; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; }
+        button { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        .btn-success { background: #27ae60; }
+        .btn-danger { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h2><i class="fas fa-crown"></i> Admin Control Panel</h2>
+        <button onclick="logout()" style="background: rgba(255,255,255,0.2);">Logout</button>
+    </nav>
+    
+    <div class="container" id="loginSection">
+        <div class="card" style="max-width: 400px; margin: 100px auto;">
+            <h3>Admin Login</h3>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+        </div>
+    </div>
+    
+    <div class="container" id="adminPanel" style="display: none;">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('streams')">📚 Streams</button>
+            <button class="tab" onclick="showTab('exams')">📝 Exam Types</button>
+            <button class="tab" onclick="showTab('suggestions')">💬 Suggestions</button>
+            <button class="tab" onclick="showTab('students')">👨‍🎓 Students</button>
+        </div>
+        
+        <div id="streamsTab" class="tab-content active">
+            <div class="card">
+                <h3>Add New Stream</h3>
+                <select id="streamClass">
+                    <option value="Form I">Form I</option>
+                    <option value="Form II">Form II</option>
+                    <option value="Form III">Form III</option>
+                    <option value="Form IV">Form IV</option>
+                </select>
+                <input type="text" id="streamName" placeholder="Stream Name (e.g., A, B, C)">
+                <button onclick="addStream()">Add Stream</button>
+                <hr style="margin: 20px 0;">
+                <h3>Existing Streams</h3>
+                <div id="streamsList"></div>
+            </div>
+        </div>
+        
+        <div id="examsTab" class="tab-content">
+            <div class="card">
+                <h3>Add New Exam Type</h3>
+                <input type="text" id="examName" placeholder="Exam Name (e.g., FTNA, CSEE, Terminal)">
+                <input type="text" id="examCode" placeholder="Exam Code">
+                <input type="number" id="examYear" placeholder="Year" value="2024">
+                <button onclick="addExamType()">Add Exam Type</button>
+                <hr style="margin: 20px 0;">
+                <h3>Existing Exam Types</h3>
+                <div id="examsList"></div>
+            </div>
+        </div>
+        
+        <div id="suggestionsTab" class="tab-content">
+            <div class="card">
+                <h3>Parent Suggestions & Questions</h3>
+                <div id="suggestionsList"></div>
+            </div>
+        </div>
+        
+        <div id="studentsTab" class="tab-content">
+            <div class="card">
+                <h3>All Students</h3>
+                <div id="studentsList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let token = '';
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok && data.role === 'admin') {
+                token = data.token;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadStreams();
+                loadExamTypes();
+                loadSuggestions();
+                loadStudents();
+            } else {
+                alert('Invalid admin credentials');
+            }
+        }
+        
+        function logout() {
+            token = '';
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`${tab}Tab`).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        async function addStream() {
+            const class_level = document.getElementById('streamClass').value;
+            const stream_name = document.getElementById('streamName').value;
+            const res = await fetch('/api/streams', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ class_level, stream_name })
+            });
+            if (res.ok) {
+                alert('Stream added');
+                loadStreams();
+            }
+        }
+        
+        async function loadStreams() {
+            const res = await fetch('/api/streams', { headers: { 'Authorization': `Bearer ${token}` } });
+            const streams = await res.json();
+            document.getElementById('streamsList').innerHTML = `
+                <table><thead><tr><th>Class</th><th>Stream</th></tr></thead><tbody>
+                ${streams.map(s => `<tr><td>${s.class_level}</td><td>${s.stream_name}</td></tr>`).join('')}
+                </tbody></table>
+            `;
+        }
+        
+        async function addExamType() {
+            const exam_name = document.getElementById('examName').value;
+            const exam_code = document.getElementById('examCode').value;
+            const year = document.getElementById('examYear').value;
+            const res = await fetch('/api/exam-types', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ exam_name, exam_code, year })
+            });
+            if (res.ok) {
+                alert('Exam type added');
+                loadExamTypes();
+            }
+        }
+        
+        async function loadExamTypes() {
+            const res = await fetch('/api/exam-types', { headers: { 'Authorization': `Bearer ${token}` } });
+            const exams = await res.json();
+            document.getElementById('examsList').innerHTML = `
+                <table><thead><tr><th>Exam Name</th><th>Code</th><th>Year</th><th>Action</th></tr></thead><tbody>
+                ${exams.map(e => `<tr><td>${e.exam_name}</td><td>${e.exam_code}</td><td>${e.year}</td><td><button onclick="deleteExamType(${e.id})" class="btn-danger">Delete</button></td></tr>`).join('')}
+                </tbody></table>
+            `;
+        }
+        
+        async function deleteExamType(id) {
+            if (confirm('Delete this exam type?')) {
+                await fetch('/api/exam-types', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ id })
+                });
+                loadExamTypes();
+            }
+        }
+        
+        async function loadSuggestions() {
+            const res = await fetch('/api/suggestions', { headers: { 'Authorization': `Bearer ${token}` } });
+            const suggestions = await res.json();
+            document.getElementById('suggestionsList').innerHTML = suggestions.map(s => `
+                <div style="background:#f8f9fa; padding:15px; margin-bottom:10px; border-radius:8px;">
+                    <p><strong>From:</strong> ${s.parent_name} (Student: ${s.student_index})</p>
+                    <p><strong>Message:</strong> ${s.suggestion}</p>
+                    ${s.reply ? `<p><strong>Your Reply:</strong> ${s.reply}</p>` : `
+                        <textarea id="reply-${s.id}" placeholder="Type your reply..." rows="2" style="width:100%; margin:10px 0;"></textarea>
+                        <button onclick="sendReply(${s.id})">Send Reply</button>
+                    `}
+                    <small>${new Date(s.date).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+        
+        async function sendReply(sugId) {
+            const reply = document.getElementById(`reply-${sugId}`).value;
+            const res = await fetch(`/api/suggestions/${sugId}/reply`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ reply })
+            });
+            if (res.ok) {
+                alert('Reply sent');
+                loadSuggestions();
+            }
+        }
+        
+        async function loadStudents() {
+            const res = await fetch('/api/students', { headers: { 'Authorization': `Bearer ${token}` } });
+            const students = await res.json();
+            document.getElementById('studentsList').innerHTML = `
+                <table><thead><tr><th>Index Number</th><th>Full Name</th><th>Class</th><th>Stream</th></tr></thead><tbody>
+                ${students.map(s => `<tr><td>${s.index_number}</td><td>${s.full_name}</td><td>${s.class_level}</td><td>${s.stream}</td></tr>`).join('')}
+                </tbody></table>
+            `;
+        }
+    </script>
+</body>
+  </html>
