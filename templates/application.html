@@ -1,1 +1,38 @@
-
+<!-- templates/application.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="glass-card form-card">
+        <h2>Student Online Application</h2>
+        <form id="applicationForm">
+            <div class="form-row"><input type="text" id="student_name" placeholder="Student Name" required></div>
+            <div class="form-row"><input type="text" id="parent_name" placeholder="Parent Name" required></div>
+            <div class="form-row"><select id="class_level" required><option>Form I</option><option>Form II</option><option>Form III</option><option>Form IV</option><option>Form V</option><option>Form VI</option></select></div>
+            <div class="form-row"><input type="text" id="region" placeholder="Region" required></div>
+            <div class="form-row"><input type="tel" id="phone" placeholder="Phone Number" required></div>
+            <div class="form-row"><input type="email" id="email" placeholder="Email (Optional)"></div>
+            <div class="form-row"><select id="gender"><option>Male</option><option>Female</option></select></div>
+            <button type="submit" class="btn-primary">Submit Application</button>
+        </form>
+        <div id="appMsg"></div>
+    </div>
+</div>
+<script>
+    document.getElementById('applicationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            student_name: document.getElementById('student_name').value,
+            parent_name: document.getElementById('parent_name').value,
+            class_level: document.getElementById('class_level').value,
+            region: document.getElementById('region').value,
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value,
+            gender: document.getElementById('gender').value
+        };
+        const res = await fetch('/api/apply', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+        const msg = await res.json();
+        document.getElementById('appMsg').innerHTML = `<div class="alert">${msg.message}</div>`;
+        if(res.ok) e.target.reset();
+    });
+</script>
+{% endblock %}
