@@ -1,4 +1,64 @@
+<!-- templates/results.html -->
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5 pt-5"><div class="section-title"><h2>Matokeo ya Mitihani</h2></div><div class="row"><div class="col-md-6 mx-auto"><div class="card"><div class="card-body"><form method="POST"><div class="mb-3"><input type="text" name="index_number" placeholder="Index Number (S1234/2024)" class="form-control" required></div><div class="mb-3"><select name="exam_type" class="form-select"><option>Form Four</option><option>Form Six</option></select></div><button type="submit" class="btn btn-gold w-100">Angalia</button></form></div></div>{% if error %}<div class="alert alert-danger mt-3">{{ error }}</div>{% endif %}{% if result %}<div class="card mt-4"><div class="card-body"><h4>{{ result.name }}</h4><p>Index: {{ result.index }} | Mwaka: {{ result.year }} | Division: {{ result.division }}</p><h5>Masomo</h5><ul>{% for s in result.subjects %}<li>{{ s.name }}: {{ s.marks }}</li>{% endfor %}</ul><p>Jumla: {{ result.total }}</p></div></div>{% endif %}</div></div></div>
+<div class="container">
+    <h1>Student Results Portal</h1>
+    <div class="glass-card search-box">
+        <input type="text" id="indexSearch" placeholder="Enter Index Number (e.g., 2024-001)">
+        <button id="searchBtn" class="btn-primary">Fetch Results</button>
+    </div>
+    <div id="resultsDisplay"></div>
+    <div id="commentsSection" style="display:none;"><textarea id="commentText" placeholder="Leave a comment/suggestion..."></textarea><button id="postComment">Post Comment</button></div>
+</div>
+<script>
+    let currentStudentIndex = '';
+    let currentResults = [];
+    document.getElementById('searchBtn').onclick = async () => {
+        const idx = document.getElementById('indexSearch').value;
+        if(!idx) return;
+        currentStudentIndex = idx;
+        const res = await fetch(`/api/results/student/${idx}`);
+        if(!res.ok) { alert('Student not found'); return; }
+        const data = await res.json();
+        currentResults = data.results;
+        renderResults(data.student, data.results);
+        document.getElementById('commentsSection').style.display = 'block';
+    };
+    function renderResults(student, results) {
+        const container = document.getElementById('resultsDisplay');
+        if(results.length===0){ container.innerHTML='<div class="glass-card">No results uploaded yet.</div>'; return; }
+        let html = `<div class="student-header"><h3>${student.name} (${student.index}) - ${student.class}</h3></div>`;
+        results.forEach(r => {
+            html += `<div class="result-card"><h4>${r.exam_type} | ${r.form} | Term ${r.term} ${r.year}</h4>
+                    <p>Total: ${r.total} | Avg: ${r.average.toFixed(1)} | Division: ${r.division} | Position: ${r.position}</p>
+                    <button onclick="showAiComment(${r.id})">AI Comment & Advice</button>
+                    <button onclick="downloadPDF(${r.id})">Download PDF Slip</button>
+                    <div id="aiComment-${r.id}"></div></div>`;
+        });
+        container.innerHTML = html;
+        // Chart comparison (past vs current)
+        if(results.length>=2){
+            let ctx = document.createElement('canvas');
+            ctx.id='compChart';
+            container.appendChild(ctx);
+            const labels = results.map(r=>r.exam_type);
+            const totals = results.map(r=>r.total);
+            new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Total Marks', data:totals, borderColor:'#3B82F6' }] } });
+        }
+    }
+    window.showAiComment = async (rid) => {
+        const resp = await fetch(`/api/ai_comment/${rid}`);
+        const ai = await resp.json();
+        document.getElementById(`aiComment-${rid}`).innerHTML = `<div class="ai-bubble">🤖 ${ai.ai_comment}</div>`;
+    };
+    window.downloadPDF = (rid) => {
+        const element = document.getElementById(`aiComment-${rid}`).parentElement;
+        html2pdf().from(element).save('result_slip.pdf');
+    };
+    document.getElementById('postComment')?.addEventListener('click', async () => {
+        const comment = document.getElementById('commentText').value;
+        await fetch('/api/comments', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ student_index:currentStudentIndex, comment, suggestion:'' }) });
+        alert('Comment submitted');
+    });
+</script>
 {% endblock %}
