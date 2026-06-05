@@ -1,1 +1,233 @@
-
+<!-- templates/index.html - Parent Results Viewing -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St. Amedeus Secondary School - Results Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        .navbar { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 1rem 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .hero { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 3rem; text-align: center; border-radius: 15px; margin-bottom: 30px; }
+        .hero h1 { font-size: 2rem; margin-bottom: 10px; }
+        .search-card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+        .form-group { flex: 1; min-width: 150px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        button { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1rem; width: 100%; }
+        .results-container { display: none; background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow-x: auto; }
+        .student-header { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 20px; }
+        .results-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .results-table th, .results-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .results-table th { background: #1e3c72; color: white; }
+        .subject-row td:first-child { font-weight: 600; background: #f8f9fa; text-align: left; }
+        .division-info { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; }
+        .ai-comment { background: #e8f4f8; padding: 20px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #1e3c72; }
+        .suggestion-box { margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+        textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin: 10px 0; }
+        @media (max-width: 768px) { .form-row { flex-direction: column; } .results-table { font-size: 10px; } .results-table td, .results-table th { padding: 5px; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h2><i class="fas fa-school"></i> St. Amedeus Secondary School</h2>
+    </nav>
+    
+    <div class="container">
+        <div class="hero">
+            <h1>CATHOLIC DIOCESE OF MOSHI</h1>
+            <h2>ST. AMEDEUS SECONDARY SCHOOL</h2>
+            <p>P.O. Box 1916, Moshi - Tanzania | Tel: 0748208331 | 0763888158 | 0757721085</p>
+        </div>
+        
+        <div class="search-card">
+            <h3>Check Student Results</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Select Year</label>
+                    <select id="examYear">
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Exam Type</label>
+                    <select id="examName">
+                        <option value="">-- Select Exam --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Class Level</label>
+                    <select id="classLevel">
+                        <option value="">-- Select Class --</option>
+                        <option value="Form I">Form I</option>
+                        <option value="Form II">Form II</option>
+                        <option value="Form III">Form III</option>
+                        <option value="Form IV">Form IV</option>
+                        <option value="Form V">Form V</option>
+                        <option value="Form VI">Form VI</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Index Number</label>
+                    <input type="text" id="indexNumber" placeholder="e.g., S1234-0001">
+                </div>
+            </div>
+            <button onclick="searchResults()"><i class="fas fa-search"></i> View Results</button>
+        </div>
+        
+        <div id="resultsContainer" class="results-container"></div>
+    </div>
+    
+    <script>
+        async function loadExamTypes() {
+            const res = await fetch('/api/exam-types');
+            const exams = await res.json();
+            const select = document.getElementById('examName');
+            select.innerHTML = '<option value="">-- Select Exam --</option>';
+            exams.forEach(exam => {
+                select.innerHTML += `<option value="${exam.exam_name}">${exam.exam_name} - ${exam.year || ''}</option>`;
+            });
+        }
+        
+        async function searchResults() {
+            const examYear = document.getElementById('examYear').value;
+            const examName = document.getElementById('examName').value;
+            const classLevel = document.getElementById('classLevel').value;
+            const indexNumber = document.getElementById('indexNumber').value;
+            
+            if (!examYear || !examName || !classLevel || !indexNumber) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            const res = await fetch(`/api/parent/results?index_number=${indexNumber}&exam_name=${examName}&exam_year=${examYear}&class_level=${classLevel}`);
+            const data = await res.json();
+            
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            
+            const subjects = ['CIVICS', 'HISTORY', 'GEOGRAPHY', 'KISWAHILI', 'ENGLISH', 'MATHEMATICS', 'BIOLOGY', 'CHEMISTRY', 'PHYSICS', 'B/MATH'];
+            
+            let subjectsHtml = '';
+            subjects.forEach(sub => {
+                subjectsHtml += `<tr class="subject-row"><td>${sub}</td><td>${data.subjects[sub] || '-'}</td></tr>`;
+            });
+            
+            // Generate trend graph if multiple exams
+            let graphHtml = '';
+            if (data.exam_history && data.exam_history.length >= 2) {
+                const labels = data.exam_history.map(e => `${e.exam} ${e.year}`);
+                const averages = data.exam_history.map(e => e.average);
+                graphHtml = `
+                    <div style="margin: 20px 0;">
+                        <h4>Performance Trend</h4>
+                        <canvas id="trendChart" style="max-height: 300px;"></canvas>
+                    </div>
+                    <script>
+                        setTimeout(() => {
+                            const ctx = document.getElementById('trendChart').getContext('2d');
+                            new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: ${JSON.stringify(labels)},
+                                    datasets: [{
+                                        label: 'Average Score (%)',
+                                        data: ${JSON.stringify(averages)},
+                                        borderColor: '#1e3c72',
+                                        backgroundColor: 'rgba(30,60,114,0.1)',
+                                        tension: 0.4,
+                                        fill: true
+                                    }]
+                                },
+                                options: { responsive: true, maintainAspectRatio: true }
+                            });
+                        }, 100);
+                    <\/script>
+                `;
+            }
+            
+            const container = document.getElementById('resultsContainer');
+            container.style.display = 'block';
+            container.innerHTML = `
+                <div class="student-header">
+                    <h3>${data.student.full_name}</h3>
+                    <p>Index Number: ${data.student.index_number} | Class: ${data.student.class_level} ${data.student.stream || ''}</p>
+                    <p>Exam: ${data.exam.name} - ${data.exam.year}</p>
+                </div>
+                
+                <table class="results-table">
+                    <thead>
+                        <tr><th>SUBJECT</th><th>MARKS</th></tr>
+                    </thead>
+                    <tbody>
+                        ${subjectsHtml}
+                        <tr style="background:#f0f2f5; font-weight:bold;"><td>TOTAL MARKS</td><td>${data.total_marks}</td></tr>
+                        <tr style="background:#f0f2f5; font-weight:bold;"><td>AVERAGE POINTS</td><td>${data.average_points}</td></tr>
+                        <tr style="background:#f0f2f5; font-weight:bold;"><td>DIVISION</td><td>${data.division}</td></tr>
+                        <tr style="background:#f0f2f5; font-weight:bold;"><td>POSITION</td><td>${data.position}</td></tr>
+                    </tbody>
+                </table>
+                
+                ${graphHtml}
+                
+                <div class="division-info">
+                    <h4>Division Key</h4>
+                    <p>Division I: 1.0 - 2.5 (EXCELLENT) | Division II: 2.6 - 3.5 (VERY GOOD) | Division III: 3.6 - 4.0 (GOOD) | Division IV: 4.1 - 5.0 (SATISFACTORY)</p>
+                </div>
+                
+                <div class="ai-comment">
+                    <h4><i class="fas fa-robot"></i> AI Academic Analysis & Advice</h4>
+                    <p style="white-space: pre-line;">${data.ai_comment}</p>
+                </div>
+                
+                <div class="suggestion-box">
+                    <h4><i class="fas fa-comment"></i> Have a suggestion or question?</h4>
+                    <input type="text" id="parentName" placeholder="Your Name" style="width:100%; margin:10px 0; padding:10px;">
+                    <textarea id="suggestionText" rows="3" placeholder="Type your suggestion or question here..."></textarea>
+                    <button onclick="sendSuggestion('${data.student.index_number}')">Send Message</button>
+                </div>
+            `;
+        }
+        
+        async function sendSuggestion(studentIndex) {
+            const parentName = document.getElementById('parentName').value;
+            const suggestion = document.getElementById('suggestionText').value;
+            
+            if (!parentName || !suggestion) {
+                alert('Please enter your name and message');
+                return;
+            }
+            
+            const res = await fetch('/api/suggestions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    parent_name: parentName,
+                    student_index: studentIndex,
+                    suggestion: suggestion
+                })
+            });
+            
+            if (res.ok) {
+                alert('Your message has been sent. Admin will reply soon.');
+                document.getElementById('suggestionText').value = '';
+                document.getElementById('parentName').value = '';
+            } else {
+                alert('Error sending message');
+            }
+        }
+        
+        loadExamTypes();
+    </script>
+</body>
+  </html>
