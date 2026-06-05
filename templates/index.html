@@ -584,4 +584,23 @@
         }
         
         function closeModal() {
-            document.getElemen
+            document.getElementById('inboxModal').style.display = 'none';
+        }
+        
+        function closeAnnouncements() {
+            document.getElementById('announcementsModal').style.display = 'none';
+        }
+        
+        // Allow Enter key to search
+        document.getElementById('indexNumber').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchResults();
+        });
+        
+        loadAnnouncements();
+        // Refresh announcements every 30 seconds
+        setInterval(loadAnnouncements, 30000);
+    </script>
+</body>
+</html>
+```
+
