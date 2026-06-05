@@ -1,11 +1,9 @@
 import os
 import sqlite3
 import json
-import hashlib
 import jwt
 import datetime
-import functools
-from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -51,7 +49,6 @@ def init_db():
         average REAL,
         division TEXT,
         position INTEGER,
-        subject_details TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(student_id) REFERENCES students(id)
     )''')
@@ -379,6 +376,18 @@ def add_student():
     finally:
         conn.close()
 
+def compute_division(average):
+    if average >= 80:
+        return 'I'
+    elif average >= 65:
+        return 'II'
+    elif average >= 45:
+        return 'III'
+    elif average >= 30:
+        return 'IV'
+    else:
+        return '0'
+
 @app.route('/api/results', methods=['POST'])
 @token_required
 def add_result():
@@ -438,23 +447,11 @@ def edit_result(result_id):
     conn.close()
     return jsonify({'message': 'Result updated'})
 
-def compute_division(average):
-    if average >= 80:
-        return 'I'
-    elif average >= 65:
-        return 'II'
-    elif average >= 45:
-        return 'III'
-    elif average >= 30:
-        return 'IV'
-    else:
-        return '0'
-
 @app.route('/api/ai_comment/<int:result_id>', methods=['GET'])
 def ai_comment(result_id):
     conn = sqlite3.connect('school_management.db')
     c = conn.cursor()
-    c.execute("SELECT marks_json, average, student_id FROM results WHERE id=?", (result_id,))
+    c.execute("SELECT marks_json, average FROM results WHERE id=?", (result_id,))
     res = c.fetchone()
     if not res:
         conn.close()
@@ -517,12 +514,4 @@ def uploaded_file(filename):
 def get_subjects():
     conn = sqlite3.connect('school_management.db')
     c = conn.cursor()
-    c.execute("SELECT form, subject_name FROM subjects")
-    subjects = c.fetchall()
-    conn.close()
-    return jsonify([{'form': s[0], 'subject_name': s[1]} for s in subjects])
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(debug=False, host='0.0.0.0', port=port)
-```
+    c.execu
