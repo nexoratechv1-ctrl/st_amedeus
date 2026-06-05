@@ -1,1 +1,26 @@
-
+<!-- templates/admin_dashboard.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard-container">
+    <h1>Admin Dashboard</h1>
+    <div class="dashboard-tabs"><button onclick="showTab('apps')">Applications</button><button onclick="showTab('gallery')">Gallery Management</button><button onclick="showTab('announce')">Announcements</button><button onclick="showTab('comments')">Comments & Replies</button></div>
+    <div id="appsTab" class="tab-content"><div id="applicationsList"></div></div>
+    <div id="galleryTab" class="tab-content" style="display:none"><form id="uploadForm"><input type="file" id="galleryImg" accept="image/*"><input type="text" id="imgDesc" placeholder="Description"><button type="submit">Upload</button></form><div id="adminGallery"></div></div>
+    <div id="announceTab" class="tab-content" style="display:none"><form id="annForm"><input type="text" id="annTitle" placeholder="Title"><textarea id="annContent"></textarea><button type="submit">Add Announcement</button></form><div id="announceListAdmin"></div></div>
+    <div id="commentsTab" class="tab-content" style="display:none"><div id="allCommentsAdmin"></div></div>
+</div>
+<script>
+    const token = localStorage.getItem('token');
+    if(!token) window.location='/admin/login';
+    async function fetchApps(){ const res=await fetch('/api/applications',{headers:{'Authorization':`Bearer ${token}`}}); const apps=await res.json(); document.getElementById('applicationsList').innerHTML=apps.map(a=>`<div>${a.student_name} - ${a.class_level} - ${a.phone} <button onclick="approve(${a.id})">Approve</button></div>`).join(''); }
+    async function fetchGalleryAdmin(){ const res=await fetch('/api/gallery'); const imgs=await res.json(); document.getElementById('adminGallery').innerHTML=imgs.map(i=>`<div><img src="${i.path}" width="100"><button onclick="deleteImg(${i.id})">Delete</button><p>${i.description}</p></div>`).join(''); }
+    document.getElementById('uploadForm')?.addEventListener('submit', async(e)=>{ e.preventDefault(); const fd=new FormData(); fd.append('image',document.getElementById('galleryImg').files[0]); fd.append('description',document.getElementById('imgDesc').value); await fetch('/api/gallery/upload',{method:'POST',headers:{'Authorization':`Bearer ${token}`},body:fd}); fetchGalleryAdmin(); });
+    window.deleteImg=async(id)=>{ await fetch(`/api/gallery/${id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${token}`}}); fetchGalleryAdmin(); };
+    document.getElementById('annForm')?.addEventListener('submit',async(e)=>{ e.preventDefault(); await fetch('/api/announcements',{method:'POST',headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({title:document.getElementById('annTitle').value,content:document.getElementById('annContent').value})}); loadAnnouncementsAdmin(); });
+    async function loadAnnouncementsAdmin(){ const r=await fetch('/api/announcements'); const anns=await r.json(); document.getElementById('announceListAdmin').innerHTML=anns.map(a=>`<div><strong>${a.title}</strong> ${a.content}</div>`).join(''); }
+    async function loadCommentsAdmin(){ const res=await fetch('/api/comments',{headers:{'Authorization':`Bearer ${token}`}}); const comm=await res.json(); document.getElementById('allCommentsAdmin').innerHTML=comm.map(c=>`<div><b>${c.student_index}</b>: ${c.comment}<br>Reply: <input id="reply-${c.id}" placeholder="Reply"><button onclick="replyComment(${c.id})">Send</button></div>`).join(''); }
+    window.replyComment=async(id)=>{ const replyInput=document.getElementById(`reply-${id}`); await fetch(`/api/comments/${id}/reply`,{method:'POST',headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({reply:replyInput.value})}); alert('Replied'); loadCommentsAdmin(); };
+    function showTab(tab){ ['apps','gallery','announce','comments'].forEach(t=>document.getElementById(t+'Tab').style.display='none'); document.getElementById(tab+'Tab').style.display='block'; if(tab=='apps') fetchApps(); if(tab=='gallery') fetchGalleryAdmin(); if(tab=='announce') loadAnnouncementsAdmin(); if(tab=='comments') loadCommentsAdmin(); }
+    showTab('apps');
+</script>
+{% endblock %}
