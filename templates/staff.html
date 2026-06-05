@@ -1,67 +1,73 @@
-<!-- templates/staff.html - Excel-like results entry -->
+<!-- templates/staff.html - Excel-like Results Sheet -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Panel - Results Entry</title>
+    <title>Staff Panel - Results Entry Sheet</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f5f5f5; }
-        .navbar { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1rem 2rem; }
-        .container { max-width: 1400px; margin: 2rem auto; padding: 0 20px; }
-        .card { background: white; border-radius: 15px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
-        select, input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-right: 10px; }
-        .excel-table { overflow-x: auto; margin-top: 2rem; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #667eea; color: white; font-weight: 600; position: sticky; top: 0; }
-        td input { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        .btn-group { margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; }
-        .success { background: #27ae60; }
-        .warning { background: #e67e22; }
-        .school-header { text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #667eea; }
-        .school-header h1 { color: #667eea; font-size: 1.8rem; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        .navbar { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 100%; margin: 0; padding: 20px; overflow-x: auto; }
+        .login-card { max-width: 400px; margin: 100px auto; background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .selection-card { background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
+        .form-group { flex: 1; min-width: 150px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+        button { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; margin-right: 10px; }
+        .btn-success { background: #27ae60; }
+        .btn-warning { background: #e67e22; }
+        .btn-danger { background: #e74c3c; }
+        .results-table { overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; }
+        th { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; font-weight: 600; position: sticky; top: 0; }
+        td input { width: 70px; padding: 5px; text-align: center; border: 1px solid #ddd; border-radius: 4px; }
+        .student-name { font-weight: 600; text-align: left; min-width: 180px; }
+        .index-number { font-weight: 600; min-width: 100px; }
+        .btn-group { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .school-header { text-align: center; margin-bottom: 20px; }
+        .school-header h1 { color: #1e3c72; font-size: 1.5rem; }
         .school-header p { color: #666; }
-        @media (max-width: 768px) { th, td { font-size: 12px; padding: 5px; } }
+        .total-row { background: #f0f2f5; font-weight: bold; }
+        .action-btns { display: flex; gap: 5px; justify-content: center; }
+        @media (max-width: 768px) { th, td { font-size: 10px; padding: 4px; } td input { width: 50px; } }
     </style>
 </head>
 <body>
     <nav class="navbar">
-        <h2>📊 Staff Results Management System</h2>
+        <h2><i class="fas fa-chalkboard-user"></i> Staff Results Management System</h2>
+        <div id="userInfo"></div>
     </nav>
     
-    <div class="container">
+    <div class="container" id="loginSection">
+        <div class="login-card">
+            <h3>Staff Login</h3>
+            <input type="text" id="username" placeholder="Username" style="width:100%; margin:10px 0; padding:10px;">
+            <input type="password" id="password" placeholder="Password" style="width:100%; margin:10px 0; padding:10px;">
+            <button onclick="login()" style="width:100%">Login</button>
+        </div>
+    </div>
+    
+    <div class="container" id="staffPanel" style="display: none;">
         <div class="school-header">
             <h1>CATHOLIC DIOCESE OF MOSHI</h1>
             <h2>ST. AMEDEUS SECONDARY SCHOOL</h2>
             <p>P.O. Box 1916, Moshi - Tanzania | Tel: 0748208331</p>
         </div>
         
-        <div class="card" id="loginSection">
-            <h3>Staff Login</h3>
-            <div class="form-group">
-                <input type="text" id="username" placeholder="Username">
-            </div>
-            <div class="form-group">
-                <input type="password" id="password" placeholder="Password">
-            </div>
-            <button onclick="login()">Login</button>
-        </div>
-        
-        <div id="staffPanel" style="display: none;">
-            <div class="card">
-                <h3>📝 Select Exam Parameters</h3>
+        <div class="selection-card">
+            <h3>Select Class & Exam Parameters</h3>
+            <div class="form-row">
                 <div class="form-group">
-                    <label>Select Class/Form</label>
-                    <select id="classLevel" onchange="loadStudents()">
-                        <option value="">-- Select Class --</option>
+                    <label>Class Level</label>
+                    <select id="classLevel" onchange="loadStreams()">
+                        <option value="">-- Select --</option>
                         <option value="Form I">Form I</option>
                         <option value="Form II">Form II</option>
                         <option value="Form III">Form III</option>
@@ -71,51 +77,56 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Select Exam Type</label>
-                    <select id="examType" onchange="loadExamTypes()">
-                        <option value="">-- Select Exam --</option>
+                    <label>Stream</label>
+                    <select id="stream">
+                        <option value="">-- Select --</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Select Subject</label>
-                    <select id="subjectName" onchange="loadResultsSheet()">
-                        <option value="">-- Select Subject --</option>
-                        <option value="Mathematics">Mathematics</option>
-                        <option value="English">English</option>
-                        <option value="Kiswahili">Kiswahili</option>
-                        <option value="Biology">Biology</option>
-                        <option value="Chemistry">Chemistry</option>
-                        <option value="Physics">Physics</option>
-                        <option value="History">History</option>
-                        <option value="Geography">Geography</option>
-                        <option value="Civics">Civics</option>
-                        <option value="Bible Knowledge">Bible Knowledge</option>
+                    <label>Exam Type</label>
+                    <select id="examName">
+                        <option value="">-- Select --</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Term</label>
-                    <select id="term">
-                        <option value="Term I">Term I</option>
-                        <option value="Term II">Term II</option>
-                        <option value="Term III">Term III</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Year</label>
-                    <input type="number" id="year" value="2024">
+                    <label>Exam Year</label>
+                    <input type="number" id="examYear" value="2024">
                 </div>
             </div>
-            
-            <div class="card" id="excelSheet" style="display: none;">
-                <h3>📊 Excel-like Results Entry Sheet</h3>
-                <p style="margin-bottom: 1rem; color: #666;">Click on any cell to edit marks. Changes are auto-saved.</p>
-                <div class="excel-table" id="excelTableContainer"></div>
-                <div class="btn-group">
-                    <button onclick="saveAllResults()"><i class="fas fa-save"></i> Save All Results</button>
-                    <button onclick="exportToExcel()" class="warning"><i class="fas fa-file-excel"></i> Export to Excel</button>
-                    <button onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Export to PDF</button>
-                </div>
+            <button onclick="loadResultsSheet()"><i class="fas fa-table"></i> Load Results Sheet</button>
+            <button onclick="openStudentModal()" class="btn-success"><i class="fas fa-user-plus"></i> Add New Student</button>
+        </div>
+        
+        <div id="resultsSheet" style="display: none;">
+            <div class="results-table">
+                <table id="resultsTable">
+                    <thead id="tableHeader"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
             </div>
+            <div class="btn-group">
+                <button onclick="saveAllResults()" class="btn-success"><i class="fas fa-save"></i> Save All Results</button>
+                <button onclick="exportToExcel()" class="btn-warning"><i class="fas fa-file-excel"></i> Export to Excel</button>
+                <button onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Export to PDF</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Student Modal -->
+    <div id="studentModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:2rem; border-radius:15px; width:500px;">
+            <h3>Add New Student</h3>
+            <input type="text" id="newIndexNumber" placeholder="Index Number (e.g., S1234-0001)" style="width:100%; margin:10px 0; padding:10px;">
+            <input type="text" id="newStudentName" placeholder="Student Full Name" style="width:100%; margin:10px 0; padding:10px;">
+            <select id="newClassLevel" style="width:100%; margin:10px 0; padding:10px;">
+                <option value="Form I">Form I</option>
+                <option value="Form II">Form II</option>
+                <option value="Form III">Form III</option>
+                <option value="Form IV">Form IV</option>
+            </select>
+            <select id="newStream" style="width:100%; margin:10px 0; padding:10px;"></select>
+            <button onclick="addStudent()" class="btn-success">Add Student</button>
+            <button onclick="closeStudentModal()">Cancel</button>
         </div>
     </div>
     
@@ -127,131 +138,227 @@
         async function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            
             const res = await fetch('/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            
             const data = await res.json();
-            if (res.ok) {
+            if (res.ok && data.role === 'staff') {
                 token = data.token;
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('staffPanel').style.display = 'block';
+                document.getElementById('userInfo').innerHTML = `<i class="fas fa-user"></i> ${data.full_name}`;
                 loadExamTypes();
+                loadStreams();
             } else {
-                alert('Invalid credentials');
+                alert('Invalid staff credentials');
             }
         }
         
         async function loadExamTypes() {
             const res = await fetch('/api/exam-types');
             const exams = await res.json();
-            const select = document.getElementById('examType');
+            const select = document.getElementById('examName');
             select.innerHTML = '<option value="">-- Select Exam --</option>';
             exams.forEach(exam => {
                 select.innerHTML += `<option value="${exam.exam_name}">${exam.exam_name}</option>`;
             });
         }
         
-        async function loadStudents() {
+        async function loadStreams() {
+            const res = await fetch('/api/streams', { headers: { 'Authorization': `Bearer ${token}` } });
+            const streams = await res.json();
             const classLevel = document.getElementById('classLevel').value;
-            if (!classLevel) return;
-            
-            const res = await fetch('/api/students', {
-                headers: { 'Authorization': `Bearer ${token}` }
+            const streamSelect = document.getElementById('stream');
+            const newStreamSelect = document.getElementById('newStream');
+            const filtered = streams.filter(s => s.class_level === classLevel);
+            streamSelect.innerHTML = '<option value="">-- Select --</option>';
+            newStreamSelect.innerHTML = '';
+            filtered.forEach(s => {
+                streamSelect.innerHTML += `<option value="${s.stream_name}">${s.stream_name}</option>`;
+                newStreamSelect.innerHTML += `<option value="${s.stream_name}">${s.stream_name}</option>`;
             });
-            const students = await res.json();
-            currentStudents = students.filter(s => s.class_level === classLevel);
         }
         
         async function loadResultsSheet() {
             const classLevel = document.getElementById('classLevel').value;
-            const examType = document.getElementById('examType').value;
-            const subjectName = document.getElementById('subjectName').value;
-            const term = document.getElementById('term').value;
-            const year = document.getElementById('year').value;
+            const stream = document.getElementById('stream').value;
+            const examName = document.getElementById('examName').value;
+            const examYear = document.getElementById('examYear').value;
             
-            if (!classLevel || !examType || !subjectName) {
-                alert('Please select Class, Exam Type, and Subject');
+            if (!classLevel || !stream || !examName) {
+                alert('Please select Class, Stream, and Exam Type');
                 return;
             }
             
-            const res = await fetch(`/api/results/sheet?exam_name=${examType}&class_level=${classLevel}&term=${term}&year=${year}&subject_name=${subjectName}`, {
+            // Load students
+            const studentsRes = await fetch(`/api/students?class_level=${classLevel}&stream=${stream}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            currentStudents = await studentsRes.json();
             
-            const data = await res.json();
-            currentResults = data.results;
+            // Load existing results
+            const resultsRes = await fetch(`/api/results?class_level=${classLevel}&stream=${stream}&exam_name=${examName}&exam_year=${examYear}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const existingResults = await resultsRes.json();
             
-            const container = document.getElementById('excelTableContainer');
-            container.innerHTML = `
-                <table id="resultsTable">
-                    <thead>
-                        <tr>
-                            <th>S/N</th>
-                            <th>Index Number</th>
-                            <th>Student Full Name</th>
-                            <th>Marks (0-100)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data.results.map((r, idx) => `
-                            <tr>
-                                <td>${idx + 1}</td>
-                                <td>${r.index_number}</td>
-                                <td>${r.full_name}</td>
-                                <td><input type="number" class="marks-input" data-id="${r.student_id}" value="${r.marks || ''}" min="0" max="100" step="0.5" onchange="updateMark(${r.student_id}, this.value)"></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+            // Create results map
+            const resultsMap = {};
+            existingResults.forEach(r => { resultsMap[r.index_number] = r; });
             
-            document.getElementById('excelSheet').style.display = 'block';
+            // Build table
+            const subjects = ['CIVICS', 'HISTORY', 'GEOGRAPHY', 'KISWAHILI', 'ENGLISH', 'MATHEMATICS', 'BIOLOGY', 'CHEMISTRY', 'PHYSICS', 'B/MATH'];
+            
+            let theadHtml = `<tr><th>S/N</th><th>INDEX NUMBER</th><th>CANDIDATE'S NAME</th>`;
+            subjects.forEach(s => { theadHtml += `<th>${s}</th>`; });
+            theadHtml += `<th>TOTAL MARKS</th><th>AVERAGE POINTS</th><th>DIVISION</th><th>POSITION</th><th>ACTIONS</th></tr>`;
+            
+            let tbodyHtml = '';
+            currentStudents.forEach((student, idx) => {
+                const existing = resultsMap[student.index_number] || {};
+                tbodyHtml += `<tr id="row-${student.id}">
+                    <td>${idx + 1}</td>
+                    <td class="index-number">${student.index_number}</td>
+                    <td class="student-name">${student.full_name}</td>
+                    ${subjects.map(sub => `<td><input type="number" class="mark-${student.id}" data-sub="${sub}" data-student="${student.id}" data-index="${student.index_number}" data-name="${student.full_name}" value="${existing[sub.toLowerCase()] || ''}" min="0" max="100" step="0.5" style="width:60px;"></td>`).join('')}
+                    <td class="total-${student.id}">${existing.total_marks || '-'}</td>
+                    <td class="avg-${student.id}">${existing.average_points || '-'}</td>
+                    <td class="div-${student.id}">${existing.division || '-'}</td>
+                    <td class="pos-${student.id}">${existing.position || '-'}</td>
+                    <td class="action-btns"><button onclick="editStudent(${student.id})" class="btn-warning" style="padding:4px 8px; font-size:11px;">Edit</button></td>
+                </tr>`;
+            });
+            
+            document.getElementById('tableHeader').innerHTML = theadHtml;
+            document.getElementById('tableBody').innerHTML = tbodyHtml;
+            document.getElementById('resultsSheet').style.display = 'block';
+            
+            // Add event listeners for auto-calculation
+            subjects.forEach(sub => {
+                document.querySelectorAll(`input[data-sub="${sub}"]`).forEach(input => {
+                    input.addEventListener('change', () => calculateStudentTotal(input.getAttribute('data-student')));
+                });
+            });
         }
         
-        function updateMark(studentId, marks) {
-            const studentResult = currentResults.find(r => r.student_id === studentId);
-            if (studentResult) {
-                studentResult.marks = parseFloat(marks) || 0;
-            }
+        function calculateStudentTotal(studentId) {
+            const subjects = ['CIVICS', 'HISTORY', 'GEOGRAPHY', 'KISWAHILI', 'ENGLISH', 'MATHEMATICS', 'BIOLOGY', 'CHEMISTRY', 'PHYSICS', 'B/MATH'];
+            let total = 0;
+            let count = 0;
+            
+            subjects.forEach(sub => {
+                const input = document.querySelector(`.mark-${studentId}[data-sub="${sub}"]`);
+                if (input && input.value) {
+                    total += parseFloat(input.value);
+                    count++;
+                }
+            });
+            
+            const avg = count > 0 ? total / count : 0;
+            let division = 'IV';
+            if (avg >= 80) division = 'I';
+            else if (avg >= 65) division = 'I';
+            else if (avg >= 50) division = 'II';
+            else if (avg >= 40) division = 'III';
+            
+            document.querySelector(`.total-${studentId}`).innerHTML = total.toFixed(1);
+            document.querySelector(`.avg-${studentId}`).innerHTML = avg.toFixed(1);
+            document.querySelector(`.div-${studentId}`).innerHTML = division;
         }
         
         async function saveAllResults() {
             const classLevel = document.getElementById('classLevel').value;
-            const examType = document.getElementById('examType').value;
-            const subjectName = document.getElementById('subjectName').value;
-            const term = document.getElementById('term').value;
-            const year = document.getElementById('year').value;
+            const stream = document.getElementById('stream').value;
+            const examName = document.getElementById('examName').value;
+            const examYear = document.getElementById('examYear').value;
             
-            const resultsToSave = currentResults.map(r => ({
-                student_id: r.student_id,
-                marks: r.marks || 0
-            }));
+            const students = [];
+            for (let student of currentStudents) {
+                const marks = {
+                    civics: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="CIVICS"]`)?.value) || null,
+                    history: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="HISTORY"]`)?.value) || null,
+                    geography: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="GEOGRAPHY"]`)?.value) || null,
+                    kiswahili: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="KISWAHILI"]`)?.value) || null,
+                    english: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="ENGLISH"]`)?.value) || null,
+                    mathematics: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="MATHEMATICS"]`)?.value) || null,
+                    biology: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="BIOLOGY"]`)?.value) || null,
+                    chemistry: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="CHEMISTRY"]`)?.value) || null,
+                    physics: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="PHYSICS"]`)?.value) || null,
+                    bmath: parseFloat(document.querySelector(`.mark-${student.id}[data-sub="B/MATH"]`)?.value) || null
+                };
+                students.push({
+                    index_number: student.index_number,
+                    student_name: student.full_name,
+                    ...marks
+                });
+            }
             
-            const res = await fetch('/api/results/bulk', {
+            const res = await fetch('/api/results', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    exam_name: examType,
                     class_level: classLevel,
-                    term: term,
-                    year: parseInt(year),
-                    subject_name: subjectName,
-                    results: resultsToSave
+                    stream: stream,
+                    exam_name: examName,
+                    exam_year: parseInt(examYear),
+                    students: students
                 })
             });
             
             if (res.ok) {
                 alert('Results saved successfully!');
+                loadResultsSheet();
             } else {
                 alert('Error saving results');
             }
+        }
+        
+        async function addStudent() {
+            const data = {
+                index_number: document.getElementById('newIndexNumber').value,
+                full_name: document.getElementById('newStudentName').value,
+                class_level: document.getElementById('newClassLevel').value,
+                stream: document.getElementById('newStream').value
+            };
+            
+            const res = await fetch('/api/students', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (res.ok) {
+                alert('Student added successfully');
+                closeStudentModal();
+                loadResultsSheet();
+            } else {
+                alert('Error adding student');
+            }
+        }
+        
+        function editStudent(studentId) {
+            const student = currentStudents.find(s => s.id === studentId);
+            const newName = prompt('Enter new name:', student.full_name);
+            if (newName) {
+                // Update logic here
+                alert('Update feature - would update student name');
+            }
+        }
+        
+        function openStudentModal() {
+            document.getElementById('studentModal').style.display = 'flex';
+        }
+        
+        function closeStudentModal() {
+            document.getElementById('studentModal').style.display = 'none';
         }
         
         function exportToExcel() {
@@ -265,38 +372,6 @@
         function exportToPDF() {
             const printWindow = window.open('', '_blank');
             const classLevel = document.getElementById('classLevel').value;
-            const examType = document.getElementById('examType').value;
-            const subjectName = document.getElementById('subjectName').value;
-            const term = document.getElementById('term').value;
-            const year = document.getElementById('year').value;
-            
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Results - ${examType} ${subjectName} ${classLevel}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 40px; }
-                        .header { text-align: center; margin-bottom: 30px; }
-                        .header h1 { color: #667eea; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background: #667eea; color: white; }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>CATHOLIC DIOCESE OF MOSHI</h1>
-                        <h2>ST. AMEDEUS SECONDARY SCHOOL</h2>
-                        <p>P.O. Box 1916, Moshi - Tanzania</p>
-                        <h3>${examType} Results - ${subjectName} - ${classLevel} - ${term} ${year}</h3>
-                    </div>
-                    ${document.getElementById('excelTableContainer').innerHTML}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        }
-    </script>
-</body>
-    </html>
+            const stream = document.getElementById('stream').value;
+            const examName = document.getElementById('examName').value;
+   
