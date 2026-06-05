@@ -1,6 +1,4 @@
-flask
-flask-sqlalchemy
-flask-login
-werkzeug
-gunicorn
-
+# requirements.txt
+Flask==2.3.3
+PyJWT==2.8.0
+Werkzeug==2.3.7
