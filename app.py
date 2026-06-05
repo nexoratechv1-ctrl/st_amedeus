@@ -514,5 +514,29 @@ def add_comment():
 
 @app.route('/api/comments', methods=['GET'])
 @token_required
-def get_all_comments():
-    
+def get_all_comments():  
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, result_id, student_index, comment, suggestion, admin_reply, created_at FROM comments ORDER BY created_at DESC")
+    comments = c.fetchall()
+    conn.close()
+    return jsonify([{'id': c[0], 'result_id': c[1], 'student_index': c[2], 'comment': c[3], 'suggestion': c[4], 'admin_reply': c[5], 'date': c[6]} for c in comments])
+
+@app.route('/api/comments/<int:comment_id>/reply', methods=['POST'])
+@token_required
+def reply_comment(comment_id):
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("UPDATE comments SET admin_reply=? WHERE id=?", (data['reply'], comment_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Reply added'})
+
+@app.route('/static/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory('static/uploads', filename)
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
+```
