@@ -374,4 +374,39 @@
             const classLevel = document.getElementById('classLevel').value;
             const stream = document.getElementById('stream').value;
             const examName = document.getElementById('examName').value;
-   
+            const examYear = document.getElementById('examYear').value;
+            
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>${examName} Results - ${classLevel} ${stream} ${examYear}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .header h1 { color: #1e3c72; }
+                        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+                        th { background: #1e3c72; color: white; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>CATHOLIC DIOCESE OF MOSHI</h1>
+                        <h2>ST. AMEDEUS SECONDARY SCHOOL</h2>
+                        <p>P.O. Box 1916, Moshi - Tanzania</p>
+                        <h3>${examName} EXAMINATION RESULTS - ${examYear}</h3>
+                        <p>CLASS: ${classLevel} ${stream}</p>
+                    </div>
+                    ${document.getElementById('resultsTable').outerHTML}
+                    <p style="margin-top: 20px;">Date: ${new Date().toLocaleDateString()}</p>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>
+```
+
