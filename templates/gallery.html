@@ -1,7 +1,22 @@
+<!-- templates/gallery.html -->
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5 pt-5">
-    <div class="section-title"><h2>Gallery</h2></div>
-    <div class="gallery-grid row">{% for item in gallery_items %}<div class="col-md-4 mb-4"><div class="gallery-item">{% if item.media_type == 'image' %}<img src="{{ item.url }}" class="img-fluid">{% else %}<iframe src="{{ item.url }}"></iframe>{% endif %}<div class="p-3"><h5>{{ item.title }}</h5><p>{{ item.description }}</p></div></div></div>{% else %}<p>Hakuna picha.</p>{% endfor %}</div>
+<div class="container">
+    <h1 class="page-title"><i class="fas fa-camera"></i> School Gallery</h1>
+    <div id="galleryContainer" class="gallery-grid"></div>
 </div>
+<script>
+    async function loadGallery() {
+        const res = await fetch('/api/gallery');
+        const images = await res.json();
+        const container = document.getElementById('galleryContainer');
+        container.innerHTML = images.map(img => `
+            <div class="gallery-card">
+                <img src="${img.path}" alt="${img.description}">
+                <div class="desc">${img.description}</div>
+            </div>
+        `).join('');
+    }
+    loadGallery();
+</script>
 {% endblock %}
