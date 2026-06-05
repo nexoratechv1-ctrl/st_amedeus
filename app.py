@@ -1,4 +1,8 @@
-import os, sqlite3, json, jwt, datetime
+import os
+import sqlite3
+import json
+import jwt
+import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12,247 +16,441 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'gallery'), exist_ok=True)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'announcements'), exist_ok=True)
 
-def allowed_file(f): return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init_db():
-    c = sqlite3.connect('school_management.db').cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS students(id INTEGER PRIMARY KEY AUTOINCREMENT,index_number TEXT UNIQUE,name TEXT,parent_name TEXT,class_level TEXT,region TEXT,phone TEXT,email TEXT,gender TEXT,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    c.execute('CREATE TABLE IF NOT EXISTS results(id INTEGER PRIMARY KEY AUTOINCREMENT,student_id INTEGER,exam_type TEXT,form TEXT,term TEXT,year INTEGER,marks_json TEXT,total_marks REAL,average REAL,division TEXT,position INTEGER,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,FOREIGN KEY(student_id) REFERENCES students(id))')
-    c.execute('CREATE TABLE IF NOT EXISTS applications(id INTEGER PRIMARY KEY AUTOINCREMENT,student_name TEXT,parent_name TEXT,class_level TEXT,region TEXT,phone TEXT,email TEXT,gender TEXT,status TEXT DEFAULT "pending",applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    c.execute('CREATE TABLE IF NOT EXISTS announcements(id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT,content TEXT,image TEXT,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    c.execute('CREATE TABLE IF NOT EXISTS gallery(id INTEGER PRIMARY KEY AUTOINCREMENT,image_path TEXT,description TEXT,uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    c.execute('CREATE TABLE IF NOT EXISTS comments(id INTEGER PRIMARY KEY AUTOINCREMENT,result_id INTEGER,student_index TEXT,comment TEXT,suggestion TEXT,admin_reply TEXT,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    c.execute('CREATE TABLE IF NOT EXISTS admins(id INTEGER PRIMARY KEY AUTOINCREMENT,username TEXT UNIQUE,password TEXT,role TEXT)')
-    c.execute('CREATE TABLE IF NOT EXISTS staff(id INTEGER PRIMARY KEY AUTOINCREMENT,username TEXT UNIQUE,password TEXT,full_name TEXT)')
-    c.execute('CREATE TABLE IF NOT EXISTS subjects(id INTEGER PRIMARY KEY AUTOINCREMENT,form TEXT,subject_name TEXT)')
-    
-    pwd = generate_password_hash('amedeus wireless.com')
-    c.execute("INSERT OR IGNORE INTO admins (username, password, role) VALUES (?, ?, ?)", ('admin', pwd, 'super_admin'))
-    c.execute("INSERT OR IGNORE INTO staff (username, password, full_name) VALUES (?, ?, ?)", ('staff', pwd, 'Default Staff'))
-    
-    for f in ['Form I','Form II','Form III','Form IV','Form V','Form VI']:
-        for s in ['Mathematics','English','Kiswahili','Biology','Chemistry','Physics','History','Geography']:
-            c.execute("INSERT OR IGNORE INTO subjects (form, subject_name) VALUES (?, ?)", (f, s))
-    c.connection.commit()
-    c.connection.close()
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        index_number TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        parent_name TEXT,
+        class_level TEXT,
+        region TEXT,
+        phone TEXT,
+        email TEXT,
+        gender TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        exam_type TEXT,
+        form TEXT,
+        term TEXT,
+        year INTEGER,
+        marks_json TEXT,
+        total_marks REAL,
+        average REAL,
+        division TEXT,
+        position INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(student_id) REFERENCES students(id)
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_name TEXT,
+        parent_name TEXT,
+        class_level TEXT,
+        region TEXT,
+        phone TEXT,
+        email TEXT,
+        gender TEXT,
+        status TEXT DEFAULT 'pending',
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS announcements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        content TEXT,
+        image TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS gallery (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        image_path TEXT,
+        description TEXT,
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        result_id INTEGER,
+        student_index TEXT,
+        comment TEXT,
+        suggestion TEXT,
+        admin_reply TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        role TEXT
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS staff (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        full_name TEXT
+    )''')
+    admin_pass = generate_password_hash('amedeus wireless.com')
+    c.execute("INSERT OR IGNORE INTO admins (username, password, role) VALUES (?, ?, ?)", ('admin', admin_pass, 'super_admin'))
+    staff_pass = generate_password_hash('amedeus wireless.com')
+    c.execute("INSERT OR IGNORE INTO staff (username, password, full_name) VALUES (?, ?, ?)", ('staff', staff_pass, 'Default Staff'))
+    c.execute('''CREATE TABLE IF NOT EXISTS subjects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        form TEXT,
+        subject_name TEXT
+    )''')
+    default_subjects = [
+        ('Form I', 'Mathematics'), ('Form I', 'English'), ('Form I', 'Kiswahili'), ('Form I', 'Biology'),
+        ('Form I', 'Chemistry'), ('Form I', 'Physics'), ('Form I', 'History'), ('Form I', 'Geography'),
+        ('Form II', 'Mathematics'), ('Form II', 'English'), ('Form II', 'Kiswahili'), ('Form II', 'Biology'),
+        ('Form II', 'Chemistry'), ('Form II', 'Physics'), ('Form II', 'History'), ('Form II', 'Geography'),
+        ('Form III', 'Mathematics'), ('Form III', 'English'), ('Form III', 'Kiswahili'), ('Form III', 'Biology'),
+        ('Form III', 'Chemistry'), ('Form III', 'Physics'), ('Form III', 'History'), ('Form III', 'Geography'),
+        ('Form IV', 'Mathematics'), ('Form IV', 'English'), ('Form IV', 'Kiswahili'), ('Form IV', 'Biology'),
+        ('Form IV', 'Chemistry'), ('Form IV', 'Physics'), ('Form IV', 'History'), ('Form IV', 'Geography'),
+        ('Form V', 'Mathematics'), ('Form V', 'English'), ('Form V', 'Kiswahili'), ('Form V', 'Biology'),
+        ('Form V', 'Chemistry'), ('Form V', 'Physics'), ('Form V', 'History'), ('Form V', 'Geography'),
+        ('Form VI', 'Mathematics'), ('Form VI', 'English'), ('Form VI', 'Kiswahili'), ('Form VI', 'Biology'),
+        ('Form VI', 'Chemistry'), ('Form VI', 'Physics'), ('Form VI', 'History'), ('Form VI', 'Geography'),
+    ]
+    for form, sub in default_subjects:
+        c.execute("INSERT OR IGNORE INTO subjects (form, subject_name) VALUES (?, ?)", (form, sub))
+    conn.commit()
+    conn.close()
 
 init_db()
 
+def generate_token(user_id, role):
+    payload = {'user_id': user_id, 'role': role, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}
+    return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+
 def token_required(f):
     @wraps(f)
-    def dec(*args,**kwargs):
-        t = request.headers.get('Authorization')
-        if not t: return jsonify({'message':'Token missing'}),401
-        try: request.user = jwt.decode(t.split(' ')[1] if ' ' in t else t, app.config['SECRET_KEY'], algorithms=['HS256'])
-        except: return jsonify({'message':'Invalid token'}),401
-        return f(*args,**kwargs)
-    return dec
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'message': 'Token missing!'}), 401
+        try:
+            token = token.split(' ')[1] if ' ' in token else token
+            request.user = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        except:
+            return jsonify({'message': 'Invalid token!'}), 401
+        return f(*args, **kwargs)
+    return decorated
 
-def division(a): return 'I' if a>=80 else 'II' if a>=65 else 'III' if a>=45 else 'IV' if a>=30 else '0'
+@app.route('/')
+def home(): return render_template('index.html')
 
-@app.route('/');app.route('/gallery');app.route('/announcements');app.route('/apply');app.route('/results')
-@app.route('/admin/login');app.route('/staff/login');app.route('/admin/dashboard');app.route('/staff/dashboard')
-def render_pages():
-    return render_template(request.endpoint+'.html' if request.endpoint not in ['home'] else 'index.html')
+@app.route('/gallery')
+def gallery_page(): return render_template('gallery.html')
+
+@app.route('/announcements')
+def announcements_page(): return render_template('announcements.html')
+
+@app.route('/apply')
+def apply_page(): return render_template('application.html')
+
+@app.route('/results')
+def results_page(): return render_template('results.html')
+
+@app.route('/admin/login')
+def admin_login_page(): return render_template('admin_login.html')
+
+@app.route('/staff/login')
+def staff_login_page(): return render_template('staff_login.html')
+
+@app.route('/admin/dashboard')
+def admin_dashboard(): return render_template('admin_dashboard.html')
+
+@app.route('/staff/dashboard')
+def staff_dashboard(): return render_template('staff_dashboard.html')
 
 @app.route('/api/admin/auth', methods=['POST'])
 def admin_auth():
-    d=request.json
-    c=sqlite3.connect('school_management.db').cursor()
-    a=c.execute("SELECT id,password FROM admins WHERE username=?",(d.get('username'),)).fetchone()
-    c.connection.close()
-    if a and check_password_hash(a[1],d.get('password')):
-        return jsonify({'token':jwt.encode({'user_id':a[0],'role':'admin','exp':datetime.datetime.utcnow()+datetime.timedelta(hours=24)},app.config['SECRET_KEY'],algorithm='HS256'),'role':'admin'})
-    return jsonify({'error':'Invalid'}),401
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, password FROM admins WHERE username=?", (data.get('username'),))
+    admin = c.fetchone()
+    conn.close()
+    if admin and check_password_hash(admin[1], data.get('password')):
+        return jsonify({'token': generate_token(admin[0], 'admin'), 'role': 'admin'})
+    return jsonify({'error': 'Invalid credentials'}), 401
 
 @app.route('/api/staff/auth', methods=['POST'])
 def staff_auth():
-    d=request.json
-    c=sqlite3.connect('school_management.db').cursor()
-    s=c.execute("SELECT id,password FROM staff WHERE username=?",(d.get('username'),)).fetchone()
-    c.connection.close()
-    if s and check_password_hash(s[1],d.get('password')):
-        return jsonify({'token':jwt.encode({'user_id':s[0],'role':'staff','exp':datetime.datetime.utcnow()+datetime.timedelta(hours=24)},app.config['SECRET_KEY'],algorithm='HS256'),'role':'staff'})
-    return jsonify({'error':'Invalid'}),401
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, password FROM staff WHERE username=?", (data.get('username'),))
+    staff = c.fetchone()
+    conn.close()
+    if staff and check_password_hash(staff[1], data.get('password')):
+        return jsonify({'token': generate_token(staff[0], 'staff'), 'role': 'staff'})
+    return jsonify({'error': 'Invalid credentials'}), 401
 
 @app.route('/api/apply', methods=['POST'])
-def apply():
-    d=request.json
-    c=sqlite3.connect('school_management.db').cursor()
-    c.execute("INSERT INTO applications (student_name,parent_name,class_level,region,phone,email,gender) VALUES (?,?,?,?,?,?,?)",(d['student_name'],d['parent_name'],d['class_level'],d['region'],d['phone'],d.get('email',''),d['gender']))
-    c.connection.commit()
-    c.connection.close()
-    return jsonify({'message':'Application submitted'})
+def submit_application():
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute('''INSERT INTO applications (student_name, parent_name, class_level, region, phone, email, gender) VALUES (?,?,?,?,?,?,?)''',
+        (data['student_name'], data['parent_name'], data['class_level'], data['region'], data['phone'], data.get('email', ''), data['gender']))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Application submitted successfully!'})
 
 @app.route('/api/applications', methods=['GET'])
 @token_required
-def get_apps():
-    c=sqlite3.connect('school_management.db').cursor()
-    a=c.execute("SELECT id,student_name,parent_name,class_level,region,phone,email,gender,status,applied_at FROM applications ORDER BY applied_at DESC").fetchall()
-    c.connection.close()
-    return jsonify([{'id':x[0],'student_name':x[1],'parent_name':x[2],'class_level':x[3],'region':x[4],'phone':x[5],'email':x[6],'gender':x[7],'status':x[8],'applied_at':x[9]} for x in a])
+def get_applications():
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, student_name, parent_name, class_level, region, phone, email, gender, status, applied_at FROM applications ORDER BY applied_at DESC")
+    apps = c.fetchall()
+    conn.close()
+    return jsonify([{'id': a[0], 'student_name': a[1], 'parent_name': a[2], 'class_level': a[3], 'region': a[4], 'phone': a[5], 'email': a[6], 'gender': a[7], 'status': a[8], 'applied_at': a[9]} for a in apps])
 
 @app.route('/api/gallery', methods=['GET'])
 def get_gallery():
-    c=sqlite3.connect('school_management.db').cursor()
-    i=c.execute("SELECT id,image_path,description FROM gallery ORDER BY uploaded_at DESC").fetchall()
-    c.connection.close()
-    return jsonify([{'id':x[0],'path':x[1],'description':x[2]} for x in i])
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, image_path, description FROM gallery ORDER BY uploaded_at DESC")
+    images = c.fetchall()
+    conn.close()
+    return jsonify([{'id': i[0], 'path': i[1], 'description': i[2]} for i in images])
 
 @app.route('/api/gallery/upload', methods=['POST'])
 @token_required
 def upload_gallery():
-    if 'image' not in request.files: return jsonify({'error':'No file'}),400
-    f=request.files['image']
-    desc=request.form.get('description','')
-    if f and allowed_file(f.filename):
-        fn=f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(f.filename)}"
-        fp=os.path.join(app.config['UPLOAD_FOLDER'],'gallery',fn)
-        f.save(fp)
-        dbp=f'/static/uploads/gallery/{fn}'
-        c=sqlite3.connect('school_management.db').cursor()
-        c.execute("INSERT INTO gallery (image_path,description) VALUES (?,?)",(dbp,desc))
-        c.connection.commit()
-        c.connection.close()
-        return jsonify({'message':'Uploaded','path':dbp})
-    return jsonify({'error':'Invalid file'}),400
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file'}), 400
+    file = request.files['image']
+    description = request.form.get('description', '')
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"{timestamp}_{filename}"
+        filepath = os.path.join('gallery', filename)
+        full_path = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
+        file.save(full_path)
+        db_path = f'/static/uploads/{filepath}'
+        conn = sqlite3.connect('school_management.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO gallery (image_path, description) VALUES (?, ?)", (db_path, description))
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Uploaded successfully', 'path': db_path})
+    return jsonify({'error': 'Invalid file'}), 400
 
-@app.route('/api/gallery/<int:iid>', methods=['DELETE'])
+@app.route('/api/gallery/<int:img_id>', methods=['DELETE'])
 @token_required
-def del_gallery(iid):
-    c=sqlite3.connect('school_management.db').cursor()
-    img=c.execute("SELECT image_path FROM gallery WHERE id=?",(iid,)).fetchone()
+def delete_gallery(img_id):
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT image_path FROM gallery WHERE id=?", (img_id,))
+    img = c.fetchone()
     if img:
-        p=img[0].replace('/static/uploads/','')
-        fp=os.path.join(app.config['UPLOAD_FOLDER'],p)
-        if os.path.exists(fp): os.remove(fp)
-        c.execute("DELETE FROM gallery WHERE id=?",(iid,))
-        c.connection.commit()
-        c.connection.close()
-        return jsonify({'message':'Deleted'})
-    c.connection.close()
-    return jsonify({'error':'Not found'}),404
+        path = img[0].replace('/static/uploads/', '')
+        full_path = os.path.join(app.config['UPLOAD_FOLDER'], path)
+        if os.path.exists(full_path):
+            os.remove(full_path)
+        c.execute("DELETE FROM gallery WHERE id=?", (img_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Deleted'})
+    conn.close()
+    return jsonify({'error': 'Not found'}), 404
 
 @app.route('/api/announcements', methods=['GET'])
-def get_ann():
-    c=sqlite3.connect('school_management.db').cursor()
-    a=c.execute("SELECT id,title,content,image,created_at FROM announcements ORDER BY created_at DESC").fetchall()
-    c.connection.close()
-    return jsonify([{'id':x[0],'title':x[1],'content':x[2],'image':x[3],'created_at':x[4]} for x in a])
+def get_announcements():
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, title, content, image, created_at FROM announcements ORDER BY created_at DESC")
+    anns = c.fetchall()
+    conn.close()
+    return jsonify([{'id': a[0], 'title': a[1], 'content': a[2], 'image': a[3], 'created_at': a[4]} for a in anns])
 
 @app.route('/api/announcements', methods=['POST'])
 @token_required
-def add_ann():
-    d=request.json
-    c=sqlite3.connect('school_management.db').cursor()
-    c.execute("INSERT INTO announcements (title,content,image) VALUES (?,?,?)",(d['title'],d['content'],d.get('image','')))
-    c.connection.commit()
-    c.connection.close()
-    return jsonify({'message':'Added'})
+def add_announcement():
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO announcements (title, content, image) VALUES (?, ?, ?)", (data['title'], data['content'], data.get('image', '')))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Announcement added'})
 
-@app.route('/api/announcements/<int:aid>', methods=['PUT','DELETE'])
+@app.route('/api/announcements/<int:ann_id>', methods=['PUT'])
 @token_required
-def edit_del_ann(aid):
-    c=sqlite3.connect('school_management.db').cursor()
-    if request.method=='DELETE':
-        c.execute("DELETE FROM announcements WHERE id=?",(aid,))
-    else:
-        d=request.json
-        c.execute("UPDATE announcements SET title=?,content=?,image=? WHERE id=?",(d['title'],d['content'],d.get('image',''),aid))
-    c.connection.commit()
-    c.connection.close()
-    return jsonify({'message':'Done'})
+def edit_announcement(ann_id):
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("UPDATE announcements SET title=?, content=?, image=? WHERE id=?", (data['title'], data['content'], data.get('image', ''), ann_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Updated'})
+
+@app.route('/api/announcements/<int:ann_id>', methods=['DELETE'])
+@token_required
+def delete_announcement(ann_id):
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM announcements WHERE id=?", (ann_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Deleted'})
 
 @app.route('/api/students', methods=['GET'])
 @token_required
 def get_students():
-    c=sqlite3.connect('school_management.db').cursor()
-    s=c.execute("SELECT id,index_number,name,class_level FROM students").fetchall()
-    c.connection.close()
-    return jsonify([{'id':x[0],'index_number':x[1],'name':x[2],'class_level':x[3]} for x in s])
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, index_number, name, class_level FROM students")
+    students = c.fetchall()
+    conn.close()
+    return jsonify([{'id': s[0], 'index_number': s[1], 'name': s[2], 'class_level': s[3]} for s in students])
 
 @app.route('/api/students', methods=['POST'])
 @token_required
 def add_student():
-    d=request.json
-    c=sqlite3.connect('school_management.db').cursor()
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
     try:
-        c.execute("INSERT INTO students (index_number,name,parent_name,class_level,region,phone,email,gender) VALUES (?,?,?,?,?,?,?,?)",(d['index_number'],d['name'],d.get('parent_name',''),d['class_level'],d.get('region',''),d.get('phone',''),d.get('email',''),d.get('gender','')))
-        c.connection.commit()
-        return jsonify({'message':'Student added'})
-    except: return jsonify({'error':'Index exists'}),400
-    finally: c.connection.close()
+        c.execute("INSERT INTO students (index_number, name, parent_name, class_level, region, phone, email, gender) VALUES (?,?,?,?,?,?,?,?)", (data['index_number'], data['name'], data.get('parent_name',''), data['class_level'], data.get('region',''), data.get('phone',''), data.get('email',''), data.get('gender','')))
+        conn.commit()
+        return jsonify({'message': 'Student added'})
+    except sqlite3.IntegrityError:
+        return jsonify({'error': 'Index number exists'}), 400
+    finally:
+        conn.close()
+
+def compute_division(average):
+    if average >= 80: return 'I'
+    elif average >= 65: return 'II'
+    elif average >= 45: return 'III'
+    elif average >= 30: return 'IV'
+    else: return '0'
 
 @app.route('/api/results', methods=['POST'])
 @token_required
 def add_result():
-    d=request.json
-    m=d.get('marks',{})
-    total=sum(m.values())
-    avg=total/len(m) if m else 0
-    div=division(avg)
-    c=sqlite3.connect('school_management.db').cursor()
-    pos=c.execute("SELECT COUNT(*) FROM results WHERE exam_type=? AND form=? AND year=? AND total_marks>?",(d['exam_type'],d['form'],d['year'],total)).fetchone()[0]+1
-    c.execute("INSERT INTO results (student_id,exam_type,form,term,year,marks_json,total_marks,average,division,position) VALUES (?,?,?,?,?,?,?,?,?,?)",(d['student_id'],d['exam_type'],d['form'],d.get('term',''),d['year'],json.dumps(m),total,avg,div,pos))
-    c.connection.commit()
-    c.connection.close()
-    return jsonify({'message':'Result added','position':pos,'division':div})
+    data = request.json
+    marks = data.get('marks', {})
+    total = sum(marks.values())
+    average = total / len(marks) if marks else 0
+    division = compute_division(average)
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM results WHERE exam_type=? AND form=? AND year=? AND total_marks > ?", (data['exam_type'], data['form'], data['year'], total))
+    position = c.fetchone()[0] + 1
+    c.execute('''INSERT INTO results (student_id, exam_type, form, term, year, marks_json, total_marks, average, division, position) VALUES (?,?,?,?,?,?,?,?,?,?)''', (data['student_id'], data['exam_type'], data['form'], data.get('term',''), data['year'], json.dumps(marks), total, average, division, position))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Result added', 'position': position, 'division': division})
 
-@app.route('/api/results/student/<idx>', methods=['GET'])
-def get_results(idx):
-    c=sqlite3.connect('school_management.db').cursor()
-    s=c.execute("SELECT id,name,class_level FROM students WHERE index_number=?",(idx,)).fetchone()
-    if not s: return jsonify({'error':'Not found'}),404
-    r=c.execute("SELECT id,exam_type,form,term,year,marks_json,total_marks,average,division,position,created_at FROM results WHERE student_id=? ORDER BY year DESC",(s[0],)).fetchall()
-    c.connection.close()
-    return jsonify({'student':{'id':s[0],'name':s[1],'index':idx,'class':s[2]},'results':[{'id':x[0],'exam_type':x[1],'form':x[2],'term':x[3],'year':x[4],'marks':json.loads(x[5]),'total':x[6],'average':x[7],'division':x[8],'position':x[9],'date':x[10]} for x in r]})
+@app.route('/api/results/student/<index_number>', methods=['GET'])
+def get_student_results(index_number):
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, name, class_level FROM students WHERE index_number=?", (index_number,))
+    student = c.fetchone()
+    if not student:
+        conn.close()
+        return jsonify({'error': 'Student not found'}), 404
+    c.execute("SELECT id, exam_type, form, term, year, marks_json, total_marks, average, division, position, created_at FROM results WHERE student_id=? ORDER BY year DESC, created_at DESC", (student[0],))
+    results = c.fetchall()
+    conn.close()
+    results_list = []
+    for r in results:
+        results_list.append({'id': r[0], 'exam_type': r[1], 'form': r[2], 'term': r[3], 'year': r[4], 'marks': json.loads(r[5]), 'total': r[6], 'average': r[7], 'division': r[8], 'position': r[9], 'date': r[10]})
+    return jsonify({'student': {'id': student[0], 'name': student[1], 'index': index_number, 'class': student[2]}, 'results': results_list})
 
-@app.route('/api/ai_comment/<int:rid>', methods=['GET'])
-def ai_comment(rid):
-    c=sqlite3.connect('school_management.db').cursor()
-    r=c.execute("SELECT marks_json,average FROM results WHERE id=?",(rid,)).fetchone()
-    c.connection.close()
-    if not r: return jsonify({'error':'Not found'}),404
-    m=json.loads(r[0])
-    weak=[s for s,mark in m.items() if mark<50]
-    avg=r[1]
-    com='Excellent! Keep it up.' if avg>=85 else 'Good progress.' if avg>=70 else 'Good effort.' if avg>=50 else 'Needs improvement.'
-    adv=f' Focus on: {", ".join(weak[:3])}.' if weak else ' Great job in all subjects!'
-    return jsonify({'ai_comment':com+adv,'weak_subjects':weak})
-
-@app.route('/api/comments', methods=['GET','POST'])
-def comments():
-    c=sqlite3.connect('school_management.db').cursor()
-    if request.method=='POST':
-        d=request.json
-        c.execute("INSERT INTO comments (result_id,student_index,comment,suggestion) VALUES (?,?,?,?)",(d.get('result_id'),d.get('student_index'),d['comment'],d.get('suggestion','')))
-        c.connection.commit()
-        c.connection.close()
-        return jsonify({'message':'Comment added'})
-    else:
-        if not request.headers.get('Authorization'): return jsonify({'error':'Unauthorized'}),401
-        cm=c.execute("SELECT id,result_id,student_index,comment,suggestion,admin_reply,created_at FROM comments ORDER BY created_at DESC").fetchall()
-        c.connection.close()
-        return jsonify([{'id':x[0],'result_id':x[1],'student_index':x[2],'comment':x[3],'suggestion':x[4],'admin_reply':x[5],'date':x[6]} for x in cm])
-
-@app.route('/api/comments/<int:cid>/reply', methods=['POST'])
+@app.route('/api/results/<int:result_id>', methods=['PUT'])
 @token_required
-def reply_comment(cid):
-    c=sqlite3.connect('school_management.db').cursor()
-    c.execute("UPDATE comments SET admin_reply=? WHERE id=?",(request.json['reply'],cid))
-    c.connection.commit()
-    c.connection.close()
-    return jsonify({'message':'Reply added'})
+def edit_result(result_id):
+    data = request.json
+    marks = data.get('marks', {})
+    total = sum(marks.values())
+    average = total / len(marks) if marks else 0
+    division = compute_division(average)
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("UPDATE results SET marks_json=?, total_marks=?, average=?, division=? WHERE id=?", (json.dumps(marks), total, average, division, result_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Result updated'})
 
-@app.route('/static/uploads/<path:fn>')
-def uploads(fn): return send_from_directory('static/uploads',fn)
+@app.route('/api/ai_comment/<int:result_id>', methods=['GET'])
+def ai_comment(result_id):
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT marks_json, average FROM results WHERE id=?", (result_id,))
+    res = c.fetchone()
+    if not res:
+        conn.close()
+        return jsonify({'error': 'Not found'}), 404
+    marks = json.loads(res[0])
+    avg = res[1]
+    weak = [sub for sub, mark in marks.items() if mark < 50]
+    if avg >= 85: comment = "Excellent performance! Keep it up."
+    elif avg >= 70: comment = "Good progress. Keep working hard."
+    elif avg >= 50: comment = "Good effort. More focus needed."
+    else: comment = "Needs improvement. Put more effort."
+    advice = f" Focus on: {', '.join(weak[:3])}." if weak else " Great job in all subjects!"
+    return jsonify({'ai_comment': comment + advice, 'weak_subjects': weak})
+
+@app.route('/api/comments', methods=['POST'])
+def add_comment():
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO comments (result_id, student_index, comment, suggestion) VALUES (?,?,?,?)", (data.get('result_id'), data.get('student_index'), data['comment'], data.get('suggestion','')))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Comment added'})
+
+@app.route('/api/comments', methods=['GET'])
+@token_required
+def get_all_comments():
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT id, result_id, student_index, comment, suggestion, admin_reply, created_at FROM comments ORDER BY created_at DESC")
+    comments = c.fetchall()
+    conn.close()
+    return jsonify([{'id': c[0], 'result_id': c[1], 'student_index': c[2], 'comment': c[3], 'suggestion': c[4], 'admin_reply': c[5], 'date': c[6]} for c in comments])
+
+@app.route('/api/comments/<int:comment_id>/reply', methods=['POST'])
+@token_required
+def reply_comment(comment_id):
+    data = request.json
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("UPDATE comments SET admin_reply=? WHERE id=?", (data['reply'], comment_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Reply added'})
+
+@app.route('/static/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory('static/uploads', filename)
 
 @app.route('/api/subjects', methods=['GET'])
 def get_subjects():
-    c=sqlite3.connect('school_management.db').cursor()
-    s=c.execute("SELECT form,subject_name FROM subjects").fetchall()
-    c.connection.close()
-    return jsonify([{'form':x[0],'subject_name':x[1]} for x in s])
+    conn = sqlite3.connect('school_management.db')
+    c = conn.cursor()
+    c.execute("SELECT form, subject_name FROM subjects")
+    subjects = c.fetchall()
+    conn.close()
+    return jsonify([{'form': s[0], 'subject_name': s[1]} for s in subjects])
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT',5000)))
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
