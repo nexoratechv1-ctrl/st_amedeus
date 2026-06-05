@@ -1,0 +1,351 @@
+<!-- templates/admin.html - Admin Panel -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Results System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f5f5f5; }
+        .navbar { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 20px; }
+        .card { background: white; border-radius: 15px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid #ddd; }
+        .tab { padding: 10px 20px; cursor: pointer; background: none; border: none; font-size: 1rem; }
+        .tab.active { color: #667eea; border-bottom: 2px solid #667eea; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #667eea; color: white; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; }
+        button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        .btn-danger { background: #e74c3c; }
+        .btn-success { background: #27ae60; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h2>👑 Admin Control Panel</h2>
+        <button onclick="logout()" style="background: rgba(255,255,255,0.2);">Logout</button>
+    </nav>
+    
+    <div class="container" id="loginSection">
+        <div class="card">
+            <h3>Admin Login</h3>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+        </div>
+    </div>
+    
+    <div class="container" id="adminPanel" style="display: none;">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('students')">📚 Students</button>
+            <button class="tab" onclick="showTab('exams')">📝 Exam Types</button>
+            <button class="tab" onclick="showTab('announcements')">📢 Announcements</button>
+            <button class="tab" onclick="showTab('messages')">📬 Messages/Inbox</button>
+            <button class="tab" onclick="showTab('results')">📊 View All Results</button>
+        </div>
+        
+        <!-- Students Tab -->
+        <div id="studentsTab" class="tab-content active">
+            <div class="card">
+                <h3>Manage Students (Excel-like Bulk Entry)</h3>
+                <textarea id="studentsBulk" rows="10" placeholder="Enter students in format: Index Number, Full Name, Class&#10;Example:&#10;2024-001, John Michael Peter, Form I&#10;2024-002, Sarah James John, Form I"></textarea>
+                <button onclick="bulkAddStudents()">Bulk Add Students</button>
+                <hr style="margin: 20px 0;">
+                <h3>Existing Students</h3>
+                <div id="studentsList"></div>
+            </div>
+        </div>
+        
+        <!-- Exam Types Tab -->
+        <div id="examsTab" class="tab-content">
+            <div class="card">
+                <h3>Add New Exam Type</h3>
+                <input type="text" id="newExamName" placeholder="Exam Name (e.g., CSEE, FTNA, Terminal)">
+                <button onclick="addExamType()">Add Exam</button>
+                <hr style="margin: 20px 0;">
+                <h3>Existing Exam Types</h3>
+                <div id="examTypesList"></div>
+            </div>
+        </div>
+        
+        <!-- Announcements Tab -->
+        <div id="announcementsTab" class="tab-content">
+            <div class="card">
+                <h3>Post New Announcement</h3>
+                <input type="text" id="annTitle" placeholder="Announcement Title">
+                <textarea id="annContent" rows="3" placeholder="Announcement Content"></textarea>
+                <button onclick="postAnnouncement()">Post Announcement</button>
+                <hr style="margin: 20px 0;">
+                <h3>All Announcements</h3>
+                <div id="announcementsList"></div>
+            </div>
+        </div>
+        
+        <!-- Messages Tab -->
+        <div id="messagesTab" class="tab-content">
+            <div class="card">
+                <h3>Parent/Student Messages</h3>
+                <div id="messagesList"></div>
+            </div>
+        </div>
+        
+        <!-- Results Tab -->
+        <div id="resultsTab" class="tab-content">
+            <div class="card">
+                <h3>View All Results</h3>
+                <div class="form-group">
+                    <select id="viewClass" onchange="viewAllResults()">
+                        <option value="">All Classes</option>
+                        <option value="Form I">Form I</option>
+                        <option value="Form II">Form II</option>
+                        <option value="Form III">Form III</option>
+                        <option value="Form IV">Form IV</option>
+                        <option value="Form V">Form V</option>
+                        <option value="Form VI">Form VI</option>
+                    </select>
+                </div>
+                <div id="allResultsList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let token = '';
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const res = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            
+            const data = await res.json();
+            if (res.ok && data.role === 'admin') {
+                token = data.token;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadStudents();
+                loadExamTypes();
+                loadAnnouncements();
+                loadMessages();
+            } else {
+                alert('Invalid admin credentials');
+            }
+        }
+        
+        function logout() {
+            token = '';
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`${tab}Tab`).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tab === 'students') loadStudents();
+            if (tab === 'exams') loadExamTypes();
+            if (tab === 'announcements') loadAnnouncements();
+            if (tab === 'messages') loadMessages();
+            if (tab === 'results') viewAllResults();
+        }
+        
+        async function bulkAddStudents() {
+            const text = document.getElementById('studentsBulk').value;
+            const lines = text.split('\n');
+            const students = [];
+            
+            for (let line of lines) {
+                if (line.trim()) {
+                    const parts = line.split(',');
+                    if (parts.length >= 3) {
+                        students.push({
+                            index_number: parts[0].trim(),
+                            full_name: parts[1].trim(),
+                            class_level: parts[2].trim()
+                        });
+                    }
+                }
+            }
+            
+            const res = await fetch('/api/students', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(students)
+            });
+            
+            if (res.ok) {
+                alert(`${students.length} students added successfully!`);
+                loadStudents();
+                document.getElementById('studentsBulk').value = '';
+            } else {
+                alert('Error adding students');
+            }
+        }
+        
+        async function loadStudents() {
+            const res = await fetch('/api/students', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const students = await res.json();
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr><th>Index Number</th><th>Full Name</th><th>Class</th></tr>
+                    </thead>
+                    <tbody>
+                        ${students.map(s => `
+                            <tr><td>${s.index_number}</td><td>${s.full_name}</td><td>${s.class_level}</td></tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('studentsList').innerHTML = html;
+        }
+        
+        async function addExamType() {
+            const examName = document.getElementById('newExamName').value;
+            if (!examName) return;
+            
+            const res = await fetch('/api/exam-types', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ exam_name: examName })
+            });
+            
+            if (res.ok) {
+                alert('Exam type added');
+                loadExamTypes();
+                document.getElementById('newExamName').value = '';
+            }
+        }
+        
+        async function loadExamTypes() {
+            const res = await fetch('/api/exam-types');
+            const exams = await res.json();
+            
+            document.getElementById('examTypesList').innerHTML = `
+                <table>
+                    <thead><tr><th>Exam Name</th><th>Action</th></tr></thead>
+                    <tbody>
+                        ${exams.map(e => `
+                            <tr><td>${e.exam_name}</td><td><button onclick="deleteExamType(${e.id})" class="btn-danger">Delete</button></td></tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        async function deleteExamType(id) {
+            if (confirm('Delete this exam type?')) {
+                await fetch('/api/exam-types', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id })
+                });
+                loadExamTypes();
+            }
+        }
+        
+        async function postAnnouncement() {
+            const title = document.getElementById('annTitle').value;
+            const content = document.getElementById('annContent').value;
+            
+            const res = await fetch('/api/announcements', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ title, content })
+            });
+            
+            if (res.ok) {
+                alert('Announcement posted');
+                loadAnnouncements();
+                document.getElementById('annTitle').value = '';
+                document.getElementById('annContent').value = '';
+            }
+        }
+        
+        async function loadAnnouncements() {
+            const res = await fetch('/api/announcements');
+            const anns = await res.json();
+            
+            document.getElementById('announcementsList').innerHTML = anns.map(a => `
+                <div style="background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-radius: 10px;">
+                    <h4>${a.title}</h4>
+                    <p>${a.content}</p>
+                    <small>${new Date(a.date).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+        
+        async function loadMessages() {
+            const res = await fetch('/api/messages', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const msgs = await res.json();
+            
+            document.getElementById('messagesList').innerHTML = msgs.map(m => `
+                <div style="background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-radius: 10px;">
+                    <p><strong>From:</strong> ${m.sender_name} (${m.student_index})</p>
+                    <p><strong>Message:</strong> ${m.message}</p>
+                    ${m.reply ? `<p><strong>Your Reply:</strong> ${m.reply}</p>` : `
+                        <textarea id="reply-${m.id}" placeholder="Type your reply..." rows="2" style="width: 100%; margin-top: 10px;"></textarea>
+                        <button onclick="sendReply(${m.id})" style="margin-top: 5px;">Send Reply</button>
+                    `}
+                    <small>${new Date(m.date).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+        
+        async function sendReply(msgId) {
+            const reply = document.getElementById(`reply-${msgId}`).value;
+            if (!reply) return;
+            
+            const res = await fetch(`/api/messages/${msgId}/reply`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ reply })
+            });
+            
+            if (res.ok) {
+                alert('Reply sent');
+                loadMessages();
+            }
+        }
+        
+        async function viewAllResults() {
+            const classLevel = document.getElementById('viewClass').value;
+            // This would need a dedicated endpoint
+            document.getElementById('allResultsList').innerHTML = '<p>Select a class to view results</p>';
+        }
+    </script>
+</body>
+    </html>
