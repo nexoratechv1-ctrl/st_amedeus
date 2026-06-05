@@ -1,4 +1,3 @@
-# app.py
 import os
 import sqlite3
 import json
@@ -14,22 +13,19 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# Ensure upload directories exist
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'gallery'), exist_ok=True)
 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'announcements'), exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Database setup
 def init_db():
     conn = sqlite3.connect('school_management.db')
     c = conn.cursor()
     
-    # Students table
     c.execute('''CREATE TABLE IF NOT EXISTS students (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         index_number TEXT UNIQUE NOT NULL,
@@ -43,7 +39,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     
-    # Results table
     c.execute('''CREATE TABLE IF NOT EXISTS results (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id INTEGER,
@@ -61,7 +56,6 @@ def init_db():
         FOREIGN KEY(student_id) REFERENCES students(id)
     )''')
     
-    # Applications table
     c.execute('''CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_name TEXT,
@@ -75,7 +69,6 @@ def init_db():
         applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     
-    # Announcements table
     c.execute('''CREATE TABLE IF NOT EXISTS announcements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
@@ -84,7 +77,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     
-    # Gallery table
     c.execute('''CREATE TABLE IF NOT EXISTS gallery (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         image_path TEXT,
@@ -92,7 +84,6 @@ def init_db():
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     
-    # Comments on results
     c.execute('''CREATE TABLE IF NOT EXISTS comments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         result_id INTEGER,
@@ -103,7 +94,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     
-    # Admin users
     c.execute('''CREATE TABLE IF NOT EXISTS admins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
@@ -111,7 +101,6 @@ def init_db():
         role TEXT
     )''')
     
-    # Staff users
     c.execute('''CREATE TABLE IF NOT EXISTS staff (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
@@ -119,21 +108,18 @@ def init_db():
         full_name TEXT
     )''')
     
-    # Insert default admin if not exists
     admin_pass = generate_password_hash('amedeus wireless.com')
     c.execute("INSERT OR IGNORE INTO admins (username, password, role) VALUES (?, ?, ?)", ('admin', admin_pass, 'super_admin'))
     
     staff_pass = generate_password_hash('amedeus wireless.com')
     c.execute("INSERT OR IGNORE INTO staff (username, password, full_name) VALUES (?, ?, ?)", ('staff', staff_pass, 'Default Staff'))
     
-    # Create subjects for different forms (mocked but useful for staff panel)
     c.execute('''CREATE TABLE IF NOT EXISTS subjects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         form TEXT,
         subject_name TEXT
     )''')
     
-    # Prepopulate subjects for forms I-VI (abbreviated)
     default_subjects = [
         ('Form I', 'Mathematics'), ('Form I', 'English'), ('Form I', 'Kiswahili'), ('Form I', 'Biology'),
         ('Form I', 'Chemistry'), ('Form I', 'Physics'), ('Form I', 'History'), ('Form I', 'Geography'),
@@ -157,7 +143,6 @@ def init_db():
 
 init_db()
 
-# JWT Helper
 def generate_token(user_id, role):
     payload = {
         'user_id': user_id,
@@ -182,7 +167,6 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# ------------------- Routes (Frontend) -------------------
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -219,7 +203,6 @@ def admin_dashboard():
 def staff_dashboard():
     return render_template('staff_dashboard.html')
 
-# ------------------- API: Auth -------------------
 @app.route('/api/admin/auth', methods=['POST'])
 def admin_auth():
     data = request.json
@@ -250,7 +233,6 @@ def staff_auth():
         return jsonify({'token': token, 'role': 'staff'})
     return jsonify({'error': 'Invalid credentials'}), 401
 
-# ------------------- API: Applications -------------------
 @app.route('/api/apply', methods=['POST'])
 def submit_application():
     data = request.json
@@ -277,7 +259,6 @@ def get_applications():
                   'phone': a[5], 'email': a[6], 'gender': a[7], 'status': a[8], 'applied_at': a[9]} for a in apps]
     return jsonify(apps_list)
 
-# ------------------- API: Gallery -------------------
 @app.route('/api/gallery', methods=['GET'])
 def get_gallery():
     conn = sqlite3.connect('school_management.db')
@@ -329,7 +310,6 @@ def delete_gallery(img_id):
     conn.close()
     return jsonify({'error': 'Not found'}), 404
 
-# ------------------- API: Announcements -------------------
 @app.route('/api/announcements', methods=['GET'])
 def get_announcements():
     conn = sqlite3.connect('school_management.db')
@@ -373,7 +353,6 @@ def delete_announcement(ann_id):
     conn.close()
     return jsonify({'message': 'Deleted'})
 
-# ------------------- API: Results & Students (Staff) -------------------
 @app.route('/api/students', methods=['GET'])
 @token_required
 def get_students():
@@ -404,13 +383,12 @@ def add_student():
 @token_required
 def add_result():
     data = request.json
-    marks = data.get('marks', {})  # dict subject: mark
+    marks = data.get('marks', {})
     total = sum(marks.values())
     average = total / len(marks) if marks else 0
     division = compute_division(average)
     conn = sqlite3.connect('school_management.db')
     c = conn.cursor()
-    # Get position: simplistic (count results with higher total for same exam)
     c.execute("SELECT COUNT(*) FROM results WHERE exam_type=? AND form=? AND year=? AND total_marks > ?",
               (data['exam_type'], data['form'], data['year'], total))
     position = c.fetchone()[0] + 1
@@ -472,7 +450,6 @@ def compute_division(average):
     else:
         return '0'
 
-# ------------------- API: AI Comment -------------------
 @app.route('/api/ai_comment/<int:result_id>', methods=['GET'])
 def ai_comment(result_id):
     conn = sqlite3.connect('school_management.db')
@@ -485,7 +462,6 @@ def ai_comment(result_id):
     marks = json.loads(res[0])
     avg = res[1]
     weak_subjects = [sub for sub, mark in marks.items() if mark < 50]
-    strong_advice = ""
     if avg >= 85:
         comment = "Excellent performance! Keep up the outstanding dedication."
     elif avg >= 70:
@@ -514,7 +490,7 @@ def add_comment():
 
 @app.route('/api/comments', methods=['GET'])
 @token_required
-def get_all_comments():  
+def get_all_comments():
     conn = sqlite3.connect('school_management.db')
     c = conn.cursor()
     c.execute("SELECT id, result_id, student_index, comment, suggestion, admin_reply, created_at FROM comments ORDER BY created_at DESC")
@@ -537,6 +513,5 @@ def reply_comment(comment_id):
 def uploaded_file(filename):
     return send_from_directory('static/uploads', filename)
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
-```
+@app.route('/api/subjects', methods=['GET'])
+de
